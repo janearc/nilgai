@@ -1,0 +1,19 @@
+{
+  "ok": [
+    {"name": "origin", "ra": 0, "dec": 0},
+    {"name": "galactic centre", "ra": 266.4168, "dec": -29.0078},
+    {"name": "top of range", "ra": 359.999999, "dec": 90},
+    {"name": "south pole", "ra": 10, "dec": -90}
+  ],
+  "refused": [
+    {"name": "ra 360", "ra": 360, "dec": 0},
+    {"name": "ra negative", "ra": -0.1, "dec": 0},
+    {"name": "ra large", "ra": 720, "dec": 0},
+    {"name": "dec above", "ra": 10, "dec": 90.0001},
+    {"name": "dec below", "ra": 10, "dec": -90.0001},
+    {"name": "ra NaN", "ra": "NaN", "dec": 0},
+    {"name": "dec NaN", "ra": 0, "dec": "NaN"},
+    {"name": "ra Inf", "ra": "Inf", "dec": 0},
+    {"name": "dec -Inf", "ra": 0, "dec": "-Inf"}
+  ]
+}

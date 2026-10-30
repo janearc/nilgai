@@ -1,0 +1,52 @@
+{
+  "source": "radius law r = sigma sqrt(-2 ln(1-p)); expected values worked by hand: 95% 2.4477, 99% 3.0348, 50% sqrt(2 ln 2)",
+  "radius": [
+    {"name": "95%", "level": 0.95, "want": 2.4477468, "rel": 1e-6},
+    {"name": "99%", "level": 0.99, "want": 3.0348543, "rel": 1e-6},
+    {"name": "50%", "level": 0.5, "want": 1.1774100, "rel": 1e-6}
+  ],
+  "levelRefused": [
+    {"name": "zero", "level": 0},
+    {"name": "one", "level": 1},
+    {"name": "negative", "level": -0.5},
+    {"name": "above one", "level": 1.5},
+    {"name": "NaN", "level": "NaN"},
+    {"name": "Inf", "level": "Inf"}
+  ],
+  "oneSigma": {"want": 0.3934693, "rel": 1e-6, "radius": 1, "radiusRel": 1e-12},
+  "percent": [
+    {"name": "95", "percent": 95, "want": 0.95, "rel": 1e-12}
+  ],
+  "percentRefused": [
+    {"name": "zero", "percent": 0},
+    {"name": "hundred", "percent": 100},
+    {"name": "negative", "percent": -5}
+  ],
+  "toOneSigma": [
+    {"name": "95% radius is one sigma", "stated": 2.4477468, "level": 0.95, "want": 1, "rel": 1e-6},
+    {"name": "zero stays zero", "stated": 0, "level": 0.95, "want": 0, "rel": 0}
+  ],
+  "toOneSigmaRefused": [
+    {"name": "negative length", "stated": -1, "level": 0.95},
+    {"name": "NaN length", "stated": "NaN", "level": 0.95},
+    {"name": "Inf length", "stated": "Inf", "level": 0.95},
+    {"name": "level zero", "stated": 1, "level": 0},
+    {"name": "level one", "stated": 1, "level": 1}
+  ],
+  "ellipse": [
+    {"name": "95% ellipse", "major": 4.8954936, "minor": 2.4477468, "angle": 45, "level": 0.95, "oneMajor": 2, "oneMinor": 1, "rel": 1e-6},
+    {"name": "stated at one sigma is unchanged", "major": 1.2, "minor": 0.9, "angle": 0, "level": "OneSigma", "oneMajor": 1.2, "oneMinor": 0.9, "rel": 1e-12}
+  ],
+  "ellipseRefused": [
+    {"name": "level zero", "major": 2, "minor": 1, "angle": 0, "level": 0},
+    {"name": "level one", "major": 2, "minor": 1, "angle": 0, "level": 1},
+    {"name": "major NaN", "major": "NaN", "minor": 1, "angle": 0, "level": 0.95},
+    {"name": "minor NaN", "major": 2, "minor": "NaN", "angle": 0, "level": 0.95},
+    {"name": "major negative", "major": -2, "minor": 1, "angle": 0, "level": 0.95},
+    {"name": "minor zero", "major": 2, "minor": 0, "angle": 0, "level": 0.95},
+    {"name": "minor longer", "major": 1, "minor": 2, "angle": 0, "level": 0.95},
+    {"name": "angle 360", "major": 2, "minor": 1, "angle": 360, "level": 0.95},
+    {"name": "angle negative", "major": 2, "minor": 1, "angle": -1, "level": 0.95},
+    {"name": "angle NaN", "major": 2, "minor": 1, "angle": "NaN", "level": 0.95}
+  ]
+}
