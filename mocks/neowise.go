@@ -43,10 +43,10 @@ func (m *MockNEOWISEReader) EXPECT() *MockNEOWISEReaderMockRecorder {
 }
 
 // Read mocks base method.
-func (m *MockNEOWISEReader) Read(name string, in io.Reader) iter.Seq2[nilgai.LightCurve, error] {
+func (m *MockNEOWISEReader) Read(name string, in io.Reader) iter.Seq2[*nilgai.LightCurve, error] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read", name, in)
-	ret0, _ := ret[0].(iter.Seq2[nilgai.LightCurve, error])
+	ret0, _ := ret[0].(iter.Seq2[*nilgai.LightCurve, error])
 	return ret0
 }
 

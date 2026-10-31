@@ -9,12 +9,12 @@ import (
 	"github.com/janearc/nilgai"
 )
 
-// looks builds the fixture's looks: the first and last in W1, the
+// looks returns the fixture's looks: the first and last in W1, and the
 // second in W2, as the fixture's times give them.
 func looks(test *testing.T, read world) []nilgai.Measurement {
 	test.Helper()
-	filters := map[string]filter{read.W1.Name: read.W1.build(test),
-		read.W2.Name: read.W2.build(test)}
+	filters := map[string]filter{read.W1.Name: read.W1.build(),
+		read.W2.Name: read.W2.build()}
 	var made []nilgai.Measurement
 	for _, each := range read.Looks {
 		made = append(made, read.look(test, filters[each.Band], each.MJD))
@@ -23,7 +23,7 @@ func looks(test *testing.T, read world) []nilgai.Measurement {
 }
 
 func curve(test *testing.T, read world,
-	points []nilgai.Measurement) (nilgai.LightCurve, error) {
+	points []nilgai.Measurement) (*nilgai.LightCurve, error) {
 	test.Helper()
 	return nilgai.NewLightCurve("J1745-2859", read.position(test),
 		read.ellipse(test), points)
@@ -80,24 +80,31 @@ func TestLightCurveInFilter(test *testing.T) {
 func TestLightCurveRefuses(test *testing.T) {
 	read := loadWorld(test)
 	good := looks(test, read)
-	untimed := []nilgai.Measurement{read.density(test, read.W1.build(test))}
+	untimed := []nilgai.Measurement{read.density(test, read.W1.build())}
 	position, ellipse := read.position(test), read.ellipse(test)
+	timed, err := nilgai.NewWhen(float64(read.Looks[none].MJD))
+	if err != nil {
+		test.Fatal(err)
+	}
 	for _, each := range []curveArgs{
 		{"no id", "", ellipse, good},
 		{"no ellipse", "x", nilgai.ErrorEllipse{}, good},
 		{"no points", "x", ellipse, nil},
 		{"no time", "x", ellipse, untimed},
 		{"unmade point", "x", ellipse, []nilgai.Measurement{{}}},
+		{"unmade point with a time", "x", ellipse,
+			[]nilgai.Measurement{nilgai.Measurement{}.WithTime(timed)}},
 	} {
 		got, err := nilgai.NewLightCurve(each.id, position, each.ellipse,
 			each.points)
-		if err == nil || got.ID() != "" {
+		if err == nil || got != nil {
 			test.Errorf("%s was accepted", each.name)
 		}
 	}
 }
 
-// curveArgs is one try at NewLightCurve that must fail.
+// curveArgs holds the arguments of one call to NewLightCurve that must
+// fail.
 type curveArgs struct {
 	name    string
 	id      string

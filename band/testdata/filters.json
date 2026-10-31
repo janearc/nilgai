@@ -1,0 +1,35 @@
+{
+  "source": "What the filter tests expect. shipped are the filters in data/filters.json and the edges in nm they must come to: W1 is 2.8 to 3.9 um, W2 is 4.04 to 5.26, W3 7.54 to 16.74 and W4 19.70 to 26.79 (each read from the Explanatory Supplement's response curves at 10% of the peak, as the file says), and 4FGL's Energy_Flux100 is 100 GeV (1.2398419843320026e-8 nm) to 100 MeV (1.2398419843320026e-5 nm), from hc = 1239.84198433 eV nm. notW1 is W1 and W2 together, the band the neowise colour profile holds, which W1 is not. approximate is what the shipped file says about each filter's edges: W1 is read from memory and not yet from the paper. docs are whole filter documents to read, and the filter asked of them; a good one comes to loNm and hiNm, a bad one is refused and the error says each word in want.",
+  "shipped": [
+    {"name": "W1", "loNm": 2800, "hiNm": 3900, "approximate": true},
+    {"name": "W2", "loNm": 4040, "hiNm": 5260, "approximate": false},
+    {"name": "W3", "loNm": 7540, "hiNm": 16740, "approximate": false},
+    {"name": "W4", "loNm": 19700, "hiNm": 26790, "approximate": false},
+    {"name": "Energy_Flux100", "loNm": 1.2398419843320026e-8, "hiNm": 1.2398419843320026e-5, "approximate": false}
+  ],
+  "notW1": {"loNm": 2800, "hiNm": 5300},
+  "docs": [
+    {"name": "edges in either order", "filter": "X", "loNm": 1000, "hiNm": 2000,
+     "doc": {"filters": [{"name": "X", "from": {"value": 2, "unit": "um"}, "to": {"value": 1, "unit": "um"}}]}},
+    {"name": "edges low then high", "filter": "X", "loNm": 1000, "hiNm": 2000,
+     "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "um"}}]}},
+    {"name": "another filter among several", "filter": "Y", "loNm": 1000, "hiNm": 2000,
+     "doc": {"filters": [{"name": "X", "from": {"value": 3, "unit": "um"}, "to": {"value": 4, "unit": "um"}}, {"name": "Y", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "um"}}]}}
+  ],
+  "badDocs": [
+    {"name": "not json", "filter": "X", "raw": "{", "want": ["filters"]},
+    {"name": "no such filter", "filter": "Z", "want": ["Z", "0 times"],
+     "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "um"}}]}},
+    {"name": "no filters at all", "filter": "X", "want": ["X", "0 times"], "doc": {"filters": []}},
+    {"name": "named twice", "filter": "X", "want": ["X", "2 times"],
+     "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "um"}}, {"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "um"}}]}},
+    {"name": "a unit nilgai does not read at the start", "filter": "X", "want": ["X", "furlong"],
+     "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "furlong"}, "to": {"value": 2, "unit": "um"}}]}},
+    {"name": "a unit nilgai does not read at the end", "filter": "X", "want": ["X", "furlong"],
+     "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "furlong"}}]}},
+    {"name": "an edge of nothing", "filter": "X", "want": ["X", "above zero"],
+     "doc": {"filters": [{"name": "X", "from": {"value": 0, "unit": "um"}, "to": {"value": 2, "unit": "um"}}]}},
+    {"name": "a band of no width", "filter": "X", "want": ["X", "below"],
+     "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 1, "unit": "um"}}]}}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "source": "Sgr A*, the radio position Reid and Brunthaler 2004 (ApJ 616, 872, table 1 note) measure their offsets from: J2000 17 45 40.0409, -29 00 28.118, from VLBA observations 1995 to 2003. Sgr A* moves about 6.4 mas a year against the quasars behind it, so by 2026 it is some 0.15 to 0.17 arcsec from here (6.4 mas a year over 23 years from 2003, or 27 from the 1999 middle of the observations). The Chandra pin has two parts. pin is a physical bound, and a loose one: it catches gross errors only. offset is a regression pin on what the reader gives for this row today, to offsetWithin.",
+  "sameTo": 1e-12,
+  "ra": 266.416837083,
+  "dec": -29.007810556,
+  "chandra": {
+    "file": "chandra-sgra.tsv",
+    "sources": 7,
+    "id": "2CXO J174540.0-290028",
+    "filter": "b",
+    "flux": 1.2987683957158e-13,
+    "stated": 0.71013253537476,
+    "sigma": 0.29011682355125087,
+    "pin": 0.1,
+    "pinWhy": "Measured 2026-10-29: the row sits 0.045 arcsec from the radio position. 0.1 arcsec is about twice that, under the 0.15 to 0.17 arcsec Sgr A* has moved since the radio epoch, and a third of the 0.29 arcsec of one sigma the old bound allowed. It catches gross errors only: a unit slip between arcsec and degrees, a swapped axis, the wrong hemisphere. It cannot see an error in cos(dec), which moves this position by about 0.003 arcsec; the offset pin below does. Do not widen it to make a change pass.",
+    "offset": 0.045025,
+    "offsetWithin": 0.0002,
+    "offsetWhy": "Worked by hand from the CSC row and the radio position: 6.3184e-6 deg in RA is 0.019893 arcsec east after cos(29.0078 deg) = 0.87467, and 1.1220e-5 deg in Dec is 0.040392 arcsec north, so 0.045025 arcsec. Without cos(dec) the east part is 0.022746 and the total 0.04636, which is 0.0013 off and outside offsetWithin. This pins what the reader gives for this row; it is not a physical bound.",
+    "sigmaWhy": "Worked by hand: a 95% radius of 2-D Gaussian error is sigma * sqrt(2 ln 20) = sigma * 2.4477468306808166, so one sigma is the stated 0.71013253537476 divided by that, 0.29011682355125087. It is written here so the check does not use RadiusFactor to test RadiusFactor."
+  },
+  "ellipses": [
+    {"name": "r0 the larger keeps the angle", "r0": 0.9, "r1": 0.5, "angle": 30, "major": 0.9, "minor": 0.5, "wantAngle": 30},
+    {"name": "r1 the larger turns the angle a quarter turn", "r0": 0.5, "r1": 0.9, "angle": 30, "major": 0.9, "minor": 0.5, "wantAngle": 120},
+    {"name": "the turn wraps past 360", "r0": 0.5, "r1": 0.9, "angle": 300, "major": 0.9, "minor": 0.5, "wantAngle": 30},
+    {"name": "equal radii keep the angle", "r0": 0.7, "r1": 0.7, "angle": 45, "major": 0.7, "minor": 0.7, "wantAngle": 45},
+    {"name": "r1 the larger at north turns it to east", "r0": 0.5, "r1": 0.9, "angle": 0, "major": 0.9, "minor": 0.5, "wantAngle": 90},
+    {"name": "r1 the larger just under a full turn", "r0": 0.5, "r1": 0.9, "angle": 359, "major": 0.9, "minor": 0.5, "wantAngle": 89},
+    {"name": "r0 the larger keeps an angle at the quarter", "r0": 0.9, "r1": 0.5, "angle": 270, "major": 0.9, "minor": 0.5, "wantAngle": 270},
+    {"name": "equal radii keep an angle at the quarter", "r0": 0.7, "r1": 0.7, "angle": 270, "major": 0.7, "minor": 0.7, "wantAngle": 270},
+    {"name": "r1 larger in the last digits turns it too","r0": 0.7, "r1": 0.7000001, "angle": 10, "major": 0.7000001, "minor": 0.7, "wantAngle": 100}
+  ],
+  "badChandra": [
+    {"name": "no input at all", "table": ""},
+    {"name": "no flux column", "table": "name\tra\tdec\terr_ellipse_r0\terr_ellipse_r1\terr_ellipse_ang\n2CXO J1\t266.4\t-29.0\t0.7\t0.7\t0\n"},
+    {"name": "a stray quote", "table": "name\tra\tdec\terr_ellipse_r0\terr_ellipse_r1\terr_ellipse_ang\tflux_aper_b\tflux_aper_lolim_b\tflux_aper_hilim_b\n2CXO J1\t\"266.4\t-29.0\t0.7\t0.7\t0\t1e-13\t0.9e-13\t1.1e-13\n"}
+  ],
+  "badRows": [
+    {"column": "ra", "row": "2CXO J1\tnorth\t-29.0\t0.7\t0.7\t0\t1e-13\t0.9e-13\t1.1e-13"},
+    {"column": "ra", "row": "2CXO J1\t400\t-29.0\t0.7\t0.7\t0\t1e-13\t0.9e-13\t1.1e-13"},
+    {"column": "err_ellipse_r0", "row": "2CXO J1\t266.4\t-29.0\t0\t0\t0\t1e-13\t0.9e-13\t1.1e-13"},
+    {"column": "flux_aper_b", "row": "2CXO J1\t266.4\t-29.0\t0.7\t0.7\t0\t\t0.9e-13\t1.1e-13"},
+    {"column": "flux_aper_b", "row": "2CXO J1\t266.4\t-29.0\t0.7\t0.7\t0\t-1e-13\t0.9e-13\t1.1e-13"},
+    {"column": "flux_aper_hilim_b", "row": "2CXO J1\t266.4\t-29.0\t0.7\t0.7\t0\t1e-13\t0.9e-13"},
+    {"column": "", "row": "\t266.4\t-29.0\t0.7\t0.7\t0\t1e-13\t0.9e-13\t1.1e-13"}
+  ]
+}

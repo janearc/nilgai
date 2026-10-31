@@ -1,0 +1,59 @@
+{
+  "source": "What the AllWISE reader must read and refuse in W2, W3 and W4, beside W1. header is a search that selects all four bands' magnitudes and errors, as IRSA's TAP service writes them for csv. The fluxes are worked by hand from F = F0 10^(-m/2.5) and sigma_F = F ln(10)/2.5 sigma_m with the zero points of data/wise-zero-points.json (W1 309.540, W2 171.787, W3 31.674, W4 8.363 Jy): W1 15 +- 0.1 is 3.0954e-4 +- 2.8509e-5; W2 14 +- 0.2 is 4.315094e-4 +- 7.948698e-5; W3 11 +- 0.3 is 1.260965e-3 +- 3.484174e-4; W4 8 +- 0.5 is 5.276696e-3 +- 2.430008e-3; a W4 limit of 17 is 1.325446e-6. rel is picked: the hand work is kept to six digits and 1e-4 is wider than that. A band whose magnitude and error are both empty has no measurement (AllWISE, Explanatory Supplement section II.1.a: a ph_qual of X leaves w?mpro and w?sigmpro null), so the source has no measurement in it. Every other refusal names the column. real is a search of AllWISE around Sgr A* (RA 266.416837083, Dec -29.007810556, radius 0.002778 deg, which is 10 arcsec), fetched from IRSA's TAP service (table allwise_p3as_psd) on 2026-10-30 with W2 to W4: both sources have a W2 limit (w2sigmpro is empty), a W3 detection and no W4. The values are worked by hand as above: W2 6.05 is 0.653116 Jy and 6.59 is 0.3971827; W3 -4.719 +- 0.142 is 2445.135 +- 319.7915 and -5.121 +- 0.093 is 3540.812 +- 303.2924.",
+  "header": "designation,ra,dec,sigra,sigdec,sigradec,w1mpro,w1sigmpro,w2mpro,w2sigmpro,w3mpro,w3sigmpro,w4mpro,w4sigmpro,cc_flags,ph_qual\n",
+  "good": "J1,266.4167,-29.0078,0.2,0.2,0,15,0.1,14,0.2,11,0.3,8,0.5,0000,AAAA",
+  "rel": 1e-4,
+  "bands": [
+    {"filter": "W1", "value": 3.0954e-4, "error": 2.8509e-5},
+    {"filter": "W2", "value": 4.315094e-4, "error": 7.948698e-5},
+    {"filter": "W3", "value": 1.260965e-3, "error": 3.484174e-4},
+    {"filter": "W4", "value": 5.276696e-3, "error": 2.430008e-3}
+  ],
+  "limitRow": "J1,266.4167,-29.0078,0.2,0.2,0,15,0.1,14,0.2,11,0.3,17,,0000,AAAU",
+  "limitValue": 1.325446e-6,
+  "absent": [
+    {"name": "no W4", "row": "J1,266.4167,-29.0078,0.2,0.2,0,15,0.1,14,0.2,11,0.3,,,0000,AAAX", "filters": ["W1", "W2", "W3"]},
+    {"name": "no W2, and the others after it are still read", "row": "J1,266.4167,-29.0078,0.2,0.2,0,15,0.1,,,11,0.3,8,0.5,0000,AXAA", "filters": ["W1", "W3", "W4"]},
+    {"name": "no W2, W3 or W4", "row": "J1,266.4167,-29.0078,0.2,0.2,0,15,0.1,,,,,,,0000,AXXX", "filters": ["W1"]}
+  ],
+  "qualities": [
+    {"name": "clean in all four bands", "cc": "0000", "want": ["good", "good", "good", "good"]},
+    {"name": "an artefact in W2 only", "cc": "0d00", "want": ["good", "doubtful", "good", "good"]},
+    {"name": "an artefact in W4 only", "cc": "000h", "want": ["good", "good", "good", "doubtful"]},
+    {"name": "an artefact in W1 and W3", "cc": "h0h0", "want": ["doubtful", "good", "doubtful", "good"]},
+    {"name": "no contamination flags at all", "cc": "", "want": ["good", "good", "good", "good"]},
+    {"name": "flags for two bands only", "cc": "0d", "want": ["good", "doubtful", "good", "good"]}
+  ],
+  "onlyW2": {"header": "designation,ra,dec,sigra,sigdec,sigradec,w1mpro,w1sigmpro,w2mpro,w2sigmpro,cc_flags,ph_qual\n", "row": "J1,266.4167,-29.0078,0.2,0.2,0,15,0.1,14,0.2,0000,AAAA", "filters": ["W1", "W2"]},
+  "badCells": [
+    {"name": "w2mpro is not a number", "column": "w2mpro", "cell": "north"},
+    {"name": "w2mpro is empty and its error is not", "column": "w2mpro", "cell": ""},
+    {"name": "w2mpro is infinite", "column": "w2mpro", "cell": "Inf"},
+    {"name": "w2sigmpro is not a number", "column": "w2sigmpro", "cell": "north"},
+    {"name": "w2sigmpro is negative", "column": "w2sigmpro", "cell": "-0.1"},
+    {"name": "w2sigmpro is NaN", "column": "w2sigmpro", "cell": "NaN"},
+    {"name": "w2sigmpro is infinite", "column": "w2sigmpro", "cell": "Inf"},
+    {"name": "w3mpro is not a number", "column": "w3mpro", "cell": "north"},
+    {"name": "w3mpro is empty and its error is not", "column": "w3mpro", "cell": ""},
+    {"name": "w3mpro is infinite", "column": "w3mpro", "cell": "Inf"},
+    {"name": "w3sigmpro is not a number", "column": "w3sigmpro", "cell": "north"},
+    {"name": "w3sigmpro is negative", "column": "w3sigmpro", "cell": "-0.1"},
+    {"name": "w3sigmpro is NaN", "column": "w3sigmpro", "cell": "NaN"},
+    {"name": "w3sigmpro is infinite", "column": "w3sigmpro", "cell": "Inf"},
+    {"name": "w4mpro is not a number", "column": "w4mpro", "cell": "north"},
+    {"name": "w4mpro is empty and its error is not", "column": "w4mpro", "cell": ""},
+    {"name": "w4mpro is infinite", "column": "w4mpro", "cell": "Inf"},
+    {"name": "w4sigmpro is not a number", "column": "w4sigmpro", "cell": "north"},
+    {"name": "w4sigmpro is negative", "column": "w4sigmpro", "cell": "-0.1"},
+    {"name": "w4sigmpro is NaN", "column": "w4sigmpro", "cell": "NaN"},
+    {"name": "w4sigmpro is infinite", "column": "w4sigmpro", "cell": "Inf"}
+  ],
+  "real": {
+    "file": "allwise-sgra-w234.csv",
+    "rel": 1e-4,
+    "sources": [
+      {"id": "J174539.58-290025.7", "w2Limit": 0.653116, "w3": 2445.135, "w3Error": 319.7915},
+      {"id": "J174540.04-290022.9", "w2Limit": 0.3971827, "w3": 3540.812, "w3Error": 303.2924}
+    ]
+  }
+}

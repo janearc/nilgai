@@ -1,0 +1,60 @@
+{
+  "source": "What the sky tests draw and refuse. centre is Sgr A* as in sgra.json to the arcsecond. A sky of 12 arcsec across and 600 pixels is 0.02 arcsec to the pixel, so every offset below is worked by hand: the axes are a 3 arcsec semi-major, which is 150 pixels, and a 1.5 arcsec semi-minor, which is 75. East is to the left and north is up, so an axis at position angle a, east of north, has its end 150 sin(a) pixels left and 150 cos(a) pixels up from the middle; the minor axis, a quarter turn on, 75 cos(a) pixels left and 75 sin(a) pixels down. Offsets are in pixels, right and down from the middle (negative is left and up) unless fromCorner says they are from the top left. mark puts the cross 1.2 arcsec east and 0.6 north of the centre, which is 60 pixels left and 30 up. arm is 0.04 of 600 pixels. strip is two skies of different widths and sizes. badSizes are widths and pixel counts that cannot be drawn. badStyles each replace keys of the shipped data/sky.json (set) or give the whole style (raw), and the error must name every word in want. reader is a reader whose prose band no ground can give (unreadable), and a floor above the style's lowest contrast. slack is how far a drawn ink's contrast may be from its aim, as a share of it, beyond the style's own within: the ink is rounded to bytes after it is solved, which moves its contrast by about a part in a hundred; it is picked. hueApart is how far an ink's hue may be from its profile's hue at the middle of its band, in degrees: rounding to bytes moves a hue by under a fifth of a degree on these inks, and the arithmetic mean of Fermi's band is several degrees away; it is picked.",
+  "centre": {"ra": 266.4168371, "dec": -29.0078106},
+  "width": 12,
+  "pixels": 600,
+  "arm": 24,
+  "slack": 0.02,
+  "hueApart": 1,
+  "axes": {"major": 3, "minor": 1.5},
+  "reader": {"unreadable": {"low": 30, "high": 40, "centre": 35}, "floor": 8},
+  "mark": {"east": 1.2, "north": 0.6, "left": 60, "up": 30},
+  "strip": {"first": {"width": 6, "pixels": 100}, "second": {"width": 12, "pixels": 150}},
+  "badSizes": [
+    {"name": "no width", "width": 0, "pixels": 100},
+    {"name": "negative width", "width": -1, "pixels": 100},
+    {"name": "width not a number", "width": "NaN", "pixels": 100},
+    {"name": "infinite width", "width": "Inf", "pixels": 100},
+    {"name": "negative infinite width", "width": "-Inf", "pixels": 100},
+    {"name": "no pixels", "width": 12, "pixels": 0},
+    {"name": "negative pixels", "width": 12, "pixels": -5},
+    {"name": "one more pixel than the style allows", "width": 12, "pixels": 4097},
+    {"name": "a huge number of pixels", "width": 12, "pixels": 99999999999}
+  ],
+  "goodSizes": [
+    {"name": "one pixel", "width": 12, "pixels": 1},
+    {"name": "a very small width", "width": 1e-9, "pixels": 100},
+    {"name": "as many pixels as the style allows", "width": 12, "pixels": 4096}
+  ],
+  "badStyles": [
+    {"name": "not json", "raw": "{", "want": ["sky style"]},
+    {"name": "ground is not a colour", "set": {"ground": "mauve"}, "want": ["sky ground"]},
+    {"name": "between is not a colour", "set": {"between": "mauve"}, "want": ["sky between"]},
+    {"name": "a style with no pixel limit", "set": {"pixelsMax": 0}, "want": ["pixels", "limit"]},
+    {"name": "mark is not a colour","set": {"mark": "mauve"}, "want": ["sky mark"]},
+    {"name": "fermi has no contrast", "set": {"contrast": {"chandra": 7.5, "neowise": 6.3, "meerkat": 4.6}}, "want": ["fermi", "no contrast"]},
+    {"name": "chandra has no contrast", "set": {"contrast": {"fermi": 9, "neowise": 6.3, "meerkat": 4.6}}, "want": ["chandra", "no contrast"]},
+    {"name": "neowise has no contrast", "set": {"contrast": {"fermi": 9, "chandra": 7.5, "meerkat": 4.6}}, "want": ["neowise", "no contrast"]},
+    {"name": "fermi under the floor", "set": {"contrast": {"fermi": 4.4, "chandra": 7.5, "neowise": 6.3, "meerkat": 4.6}}, "want": ["fermi", "floor"]},
+    {"name": "neowise under the floor", "set": {"contrast": {"fermi": 9, "chandra": 7.5, "neowise": 4.4, "meerkat": 4.6}}, "want": ["neowise", "floor"]},
+    {"name": "chandra past what a ground can give", "set": {"contrast": {"fermi": 9, "chandra": 25, "neowise": 6.3, "meerkat": 4.6}}, "want": ["chandra", "cannot reach"]},
+    {"name": "a pixel limit under zero", "set": {"pixelsMax": -1}, "want": ["pixels", "limit"]},
+    {"name": "no contrasts at all","set": {"contrast": {}}, "want": ["fermi", "no contrast"]},
+    {"name": "chandra under the floor", "set": {"contrast": {"fermi": 9, "chandra": 4.4, "neowise": 6.3, "meerkat": 4.6}}, "want": ["chandra", "floor"]},
+    {"name": "fermi past what a ground can give", "set": {"contrast": {"fermi": 25, "chandra": 7.5, "neowise": 6.3, "meerkat": 4.6}}, "want": ["fermi", "cannot reach"]}
+  ],
+  "atTheFloor": {"contrast": {"fermi": 9, "chandra": 7.5, "neowise": 6.3, "meerkat": 4.5}},
+  "ellipses": [
+    {"name": "north", "angle": 0, "major": {"right": 0, "down": -150}, "minor": {"right": -75, "down": 0}},
+    {"name": "east", "angle": 90, "major": {"right": -150, "down": 0}, "minor": {"right": 0, "down": 75}},
+    {"name": "south, the same axis as north", "angle": 180, "major": {"right": 0, "down": 150}, "minor": {"right": 75, "down": 0}},
+    {"name": "west, the same axis as east", "angle": 270, "major": {"right": 150, "down": 0}, "minor": {"right": 0, "down": -75}},
+    {"name": "north-east", "angle": 45, "major": {"right": -106.066, "down": -106.066}, "minor": {"right": -53.033, "down": 53.033}}
+  ],
+  "ground": [
+    {"name": "halfway up the major axis", "right": 0, "down": -75},
+    {"name": "inside the minor axis", "right": -30, "down": 0},
+    {"name": "a half again past the major end", "right": 0, "down": -225},
+    {"name": "the far corner", "right": 5, "down": 5, "fromCorner": true}
+  ]
+}

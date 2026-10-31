@@ -1,0 +1,8 @@
+{
+  "source": "The ranges the property tests draw from, all picked. sigma is the range in arcsec for an AllWISE sigra or sigdec, which AllWISE gives from a few hundredths to a few arcsec. share is how much of the largest co-sigma the covariance allows is used: sigradec is share times sqrt(sigra sigdec) with sign, kept under one so the covariance stays positive definite, because a co-sigma whose square passes sigra sigdec would be an ellipse that cannot exist. radius is the range in arcsec for a Chandra radius; angle is the range in degrees for a position angle, which a catalogue gives from 0 up to 360. rel is how near the checked identities must hold, as a share: they are algebra on float64, good to about a part in a million million, so a part in a thousand million leaves room and still sees any slip in the formula.",
+  "sigma": {"low": 0.01, "high": 5},
+  "share": {"low": -0.95, "high": 0.95},
+  "radius": {"low": 0.05, "high": 5},
+  "angle": {"low": 0, "high": 359.9},
+  "rel": 1e-9
+}

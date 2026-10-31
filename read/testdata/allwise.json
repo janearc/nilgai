@@ -1,0 +1,53 @@
+{
+  "source": "What the AllWISE reader must read and refuse. header is the columns a search selects. Every ellipse is worked by hand from sigra, sigdec and sigradec (arcsec): the covariance is [[sigra^2, c], [c, sigdec^2]] with c = sigradec * |sigradec|, the axes are the square roots of its eigenvalues, mean +- hypot((sigra^2 - sigdec^2) / 2, c) under the root, and the major axis lies at 1/2 atan2(2c, sigra^2 - sigdec^2) from east toward north, which is 90 degrees less than the position angle east of north. A round ellipse has no direction, so its angle is not checked (anyAngle). The case 'general' is major sqrt(0.25 + 0.09 over 2 + hypot(0.08, 0.09)) = 0.5389025383, minor 0.2226747723, angle 90 - 24.1832303317 = 65.8167696683. flux is the W1 flux density and its error for a Vega magnitude and error, from F = 309.540 Jy * 10^(-m/2.5) and sigma_F = F ln(10)/2.5 sigma_m, as wise.json works them: 15 mag and 0.1 is 3.0954e-4 Jy and 2.8509e-5 Jy, to a part in ten thousand (rel). flags are a cc_flags and ph_qual and the quality they come to; only the first character of cc_flags is W1's. A cell the reader cannot read is named by its column in a RowError; a column the file lacks, or a file that is not a table, is an error that is not a row's. ellipseRel and angleApart are picked: how near the hand-worked axes (as a share) and angles (in degrees, counted round the full turn) must be, a part in a thousand million, which is far inside what a float64 gives and far finer than any catalogue's error. sgra is the real search around Sgr A* in this directory.",
+  "header": "designation,ra,dec,sigra,sigdec,sigradec,w1mpro,w1sigmpro,cc_flags,ph_qual\n",
+  "good": "J174540.00-290028.0,266.4167,-29.0078,0.2,0.2,0,15,0.1,0000,AAAA",
+  "ellipseRel": 1e-9,
+  "angleApart": 1e-9,
+  "sgra": {"file": "allwise-sgra.csv", "ids": ["J174539.58-290025.7", "J174540.04-290022.9"], "quality": "doubtful"},
+  "id": "J174540.00-290028.0",
+  "ra": 266.4167,
+  "dec": -29.0078,
+  "filter": "W1",
+  "flux": {"mag": 15, "err": 0.1, "value": 3.0954e-4, "error": 2.8509e-5, "rel": 1e-4},
+  "ellipses": [
+    {"name": "round", "sigra": 0.2, "sigdec": 0.2, "sigradec": 0, "major": 0.2, "minor": 0.2, "anyAngle": true},
+    {"name": "north-south needle", "sigra": 0.1, "sigdec": 0.5, "sigradec": 0, "major": 0.5, "minor": 0.1, "angle": 0},
+    {"name": "east-west needle", "sigra": 0.5, "sigdec": 0.1, "sigradec": 0, "major": 0.5, "minor": 0.1, "angle": 90},
+    {"name": "tilted north-east", "sigra": 0.3, "sigdec": 0.3, "sigradec": 0.2, "major": 0.3605551275463989, "minor": 0.22360679774997896, "angle": 45},
+    {"name": "tilted south-east", "sigra": 0.3, "sigdec": 0.3, "sigradec": -0.2, "major": 0.3605551275463989, "minor": 0.22360679774997896, "angle": 135},
+    {"name": "general", "sigra": 0.5, "sigdec": 0.3, "sigradec": 0.3, "major": 0.5389025383016144, "minor": 0.22267477228477645, "angle": 65.8167696682851}
+  ],
+  "flags": [
+    {"name": "clean in all four bands", "cc": "0000", "ph": "AAAA", "quality": "good"},
+    {"name": "a diffraction spike in W1", "cc": "d000", "ph": "AAAA", "quality": "doubtful"},
+    {"name": "a halo in W1 and W3", "cc": "h0h0", "ph": "ABUU", "quality": "doubtful"},
+    {"name": "an artefact in W2 only", "cc": "0d00", "ph": "AAAA", "quality": "good"},
+    {"name": "no contamination flags at all", "cc": "", "ph": "AAAA", "quality": "good"}
+  ],
+  "limit": {"name": "an upper limit", "row": "J1,266.4,-29.0,0.2,0.2,0,15,,0000,UUUU", "value": 3.0954e-4, "rel": 1e-4},
+  "badRows": [
+    {"name": "ra is not a number", "row": "J1,north,-29.0,0.2,0.2,0,15,0.1,0000,AAAA", "column": "ra"},
+    {"name": "ra past a full circle", "row": "J1,400,-29.0,0.2,0.2,0,15,0.1,0000,AAAA", "column": "ra"},
+    {"name": "dec empty", "row": "J1,266.4,,0.2,0.2,0,15,0.1,0000,AAAA", "column": "dec"},
+    {"name": "sigra empty", "row": "J1,266.4,-29.0,,0.2,0,15,0.1,0000,AAAA", "column": "sigra"},
+    {"name": "sigradec empty", "row": "J1,266.4,-29.0,0.2,0.2,,15,0.1,0000,AAAA", "column": "sigradec"},
+    {"name": "w1mpro empty", "row": "J1,266.4,-29.0,0.2,0.2,0,,0.1,0000,AAAA", "column": "w1mpro"},
+    {"name": "no error at all", "row": "J1,266.4,-29.0,0,0,0,15,0.1,0000,AAAA", "column": "sigra"},
+    {"name": "a co-sigma no ellipse could have", "row": "J1,266.4,-29.0,0.1,0.1,0.5,15,0.1,0000,AAAA", "column": "sigra"},
+    {"name": "w1sigmpro is not a number", "row": "J1,266.4,-29.0,0.2,0.2,0,15,wide,0000,AAAA", "column": "w1sigmpro"},
+    {"name": "w1sigmpro is negative", "row": "J1,266.4,-29.0,0.2,0.2,0,15,-0.1,0000,AAAA", "column": "w1sigmpro"},
+    {"name": "w1sigmpro is infinite", "row": "J1,266.4,-29.0,0.2,0.2,0,15,Inf,0000,AAAA", "column": "w1sigmpro"},
+    {"name": "w1mpro infinite on a detection", "row": "J1,266.4,-29.0,0.2,0.2,0,Inf,0.1,0000,AAAA", "column": "w1mpro"},
+    {"name": "w1mpro infinite on a limit", "row": "J1,266.4,-29.0,0.2,0.2,0,Inf,,0000,AAAA", "column": "w1mpro"},
+    {"name": "a flux that overflows", "row": "J1,266.4,-29.0,0.2,0.2,0,-10000,0.1,0000,AAAA", "column": "w1mpro"},
+    {"name": "an error that overflows the flux error: magnitude -60 is about 3 W/m^2/Hz, so 1e308 magnitudes of error is past the largest float", "row": "J1,266.4,-29.0,0.2,0.2,0,-60,1e308,0000,AAAA", "column": "w1mpro"},
+    {"name": "no designation", "row": ",266.4,-29.0,0.2,0.2,0,15,0.1,0000,AAAA", "column": ""}
+  ],
+  "badTables": [
+    {"name": "no input at all", "table": ""},
+    {"name": "no w1sigmpro column", "table": "designation,ra,dec,sigra,sigdec,sigradec,w1mpro,cc_flags,ph_qual\nJ1,266.4,-29.0,0.2,0.2,0,15,0000,AAAA\n"},
+    {"name": "no cc_flags column", "table": "designation,ra,dec,sigra,sigdec,sigradec,w1mpro,w1sigmpro,ph_qual\nJ1,266.4,-29.0,0.2,0.2,0,15,0.1,AAAA\n"}
+  ],
+  "stray": "J2,\"266.4,-29.0,0.2,0.2,0,15,0.1,0000,AAAA"
+}

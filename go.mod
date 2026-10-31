@@ -3,9 +3,12 @@ module github.com/janearc/nilgai
 go 1.26.10
 
 require (
-	github.com/janearc/libtheme-css v0.4.4
+	github.com/astrogo/fitsio v0.3.0
+	github.com/janearc/libreadme v0.1.0
+	github.com/janearc/libtheme-css v0.4.6
 	github.com/janearc/puzzlemouth v0.1.0
 	go.uber.org/mock v0.6.0
+	pgregory.net/rapid v1.3.0
 )
 
 require (

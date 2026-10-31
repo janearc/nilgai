@@ -1,0 +1,45 @@
+{
+  "source": "The edges of the filters nilgai labels a measurement with, each as its paper writes it and cited. They are not the colour profiles in profiles.json, which only set what a band looks like: a catalogue's own filter lives here. approximate is true while the edges are rounded from memory of the paper and not yet read from it.",
+  "filters": [
+    {
+      "name": "W1",
+      "band": "WISE W1 alone, about 2.8 to 3.9 um; edges approximate until read from the relative response curves of Wright et al. 2010, AJ 140, 1868. Read the way W2 to W4 are (10% of peak, RSR-W1.EE.txt of the Explanatory Supplement) the edges would be 2.80 to 3.82 um; they are not changed here",
+      "cite": "Wright et al. 2010, AJ 140, 1868",
+      "approximate": true,
+      "from": {"value": 2.8, "unit": "um"},
+      "to": {"value": 3.9, "unit": "um"}
+    },
+    {
+      "name": "W2",
+      "band": "WISE W2 alone: the wavelengths where its energy-based relative system response first and last reaches 10% of its peak, 4.04 to 5.26 um, read from RSR-W2.EE.txt at the file's 0.01 um steps. The 10% level is picked, as no source gives edges: at 1% the range is 3.97 to 5.34 um and at half the peak it is 4.10 to 5.19 um",
+      "cite": "WISE All-Sky Release Explanatory Supplement, section IV.4.h(v), whose RSR-W2.EE.txt is the response of Jarrett et al. 2011, ApJ 735, 112; saved copy in nilgai-data/wise-docs/figures/",
+      "approximate": false,
+      "from": {"value": 4.04, "unit": "um"},
+      "to": {"value": 5.26, "unit": "um"}
+    },
+    {
+      "name": "W3",
+      "band": "WISE W3 alone: where its energy-based relative system response first and last reaches 10% of its peak, 7.54 to 16.74 um, read from RSR-W3.EE.txt. The 10% level is picked, as no source gives edges: at 1% the range is 7.45 to 17.26 um and at half the peak it is 10.08 to 16.35 um",
+      "cite": "WISE All-Sky Release Explanatory Supplement, section IV.4.h(v), whose RSR-W3.EE.txt is the response of Jarrett et al. 2011, ApJ 735, 112; saved copy in nilgai-data/wise-docs/figures/",
+      "approximate": false,
+      "from": {"value": 7.54, "unit": "um"},
+      "to": {"value": 16.74, "unit": "um"}
+    },
+    {
+      "name": "W4",
+      "band": "WISE W4 alone: where its energy-based relative system response first and last reaches 10% of its peak, 19.70 to 26.79 um, read from RSR-W4.EE.txt. The 10% level is picked, as no source gives edges: at 1% the range is 19.53 to 27.91 um and at half the peak it is 19.86 to 24.59 um",
+      "cite": "WISE All-Sky Release Explanatory Supplement, section IV.4.h(v), whose RSR-W4.EE.txt is the response of Jarrett et al. 2011, ApJ 735, 112; saved copy in nilgai-data/wise-docs/figures/",
+      "approximate": false,
+      "from": {"value": 19.7, "unit": "um"},
+      "to": {"value": 26.79, "unit": "um"}
+    },
+    {
+      "name": "Energy_Flux100",
+      "band": "4FGL's Energy_Flux100 column, the energy flux from 100 MeV to 100 GeV, as 4FGL defines it; not the whole catalogue's range",
+      "cite": "Abdollahi et al. 2022, ApJS 260, 53, for the column definitions; the release is 4FGL-DR4, Ballet et al. 2023, arXiv 2307.12546",
+      "approximate": false,
+      "from": {"value": 100, "unit": "MeV"},
+      "to": {"value": 100, "unit": "GeV"}
+    }
+  ]
+}

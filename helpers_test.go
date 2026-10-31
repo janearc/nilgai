@@ -14,14 +14,17 @@ import (
 //go:embed testdata/*.json
 var fixtures embed.FS
 
-// none is defined as a count of nothing.
+// none is the count of nothing, zero.
 const none = 0
 
-// positive is defined: the sign math.Inf is asked for to get +Inf.
+// positive is the sign that math.Inf takes to return +Inf.
 const positive = +1
 
-// Num is a number in a fixture. JSON has no NaN or infinity, so a
-// fixture writes them as the strings "NaN", "Inf" and "-Inf".
+// unit is one of a unit, the amount a conversion is defined by.
+const unit = 1
+
+// Num is a number in a fixture. JSON has no NaN or infinity, so a fixture
+// writes them as the strings "NaN", "Inf" and "-Inf".
 type Num float64
 
 // UnmarshalJSON reads a number, or one of the three special strings.
@@ -38,7 +41,7 @@ func (num *Num) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// special reads NaN, Inf, -Inf or the word OneSigma.
+// special sets num from the text "NaN", "Inf", "-Inf" or "OneSigma".
 func (num *Num) special(text string) error {
 	switch text {
 	case "NaN":
@@ -68,55 +71,86 @@ func load(test *testing.T, name string, into any) {
 	}
 }
 
-// near says whether got is within rel of want, as a fraction of want;
-// a want of nothing must be matched exactly.
+// near says whether got is within rel of want, where rel is a fraction of
+// want. A want of zero must be matched exactly.
 func near(got, want, rel Num) bool {
 	return math.Abs(float64(got-want)) <= float64(rel)*math.Abs(float64(want))
 }
 
-// bandSpec is a filter as a fixture writes it: its name and edges in nm.
+// bandSpec describes a filter as a fixture writes it: its name and edges
+// in nm.
 type bandSpec struct {
 	Name   string
 	Lo, Hi Num
 }
 
-// filter is a catalogue's filter as nilgai holds it: a name and the
-// first and last libtheme bands it covers.
+// filter holds a catalogue's filter as nilgai holds it: a name and the
+// first and last libtheme band it covers.
 type filter struct {
 	name        string
 	first, last bands.Band
 }
 
-// build is the filter from its edges, failing the test if refused.
-func (spec bandSpec) build(test *testing.T) filter {
-	test.Helper()
-	first, last, err := nilgai.BandsBetween(float64(spec.Lo),
-		float64(spec.Hi))
-	if err != nil {
-		test.Fatal(err)
-	}
-	return filter{name: spec.Name, first: first, last: last}
+// build returns the filter for its edges, which is the libtheme bands the
+// edges fall in. The fixture's edges are not on a band's edge, so the band
+// that the high edge falls in is the filter's last.
+func (spec bandSpec) build() filter {
+	return filter{name: spec.Name, first: bands.Of(float64(spec.Lo)),
+		last: bands.Of(float64(spec.Hi))}
 }
 
-// fluxSpec is a flux as a fixture writes it.
+// fluxSpec describes a flux as a fixture writes it.
 type fluxSpec struct {
 	Name  string
 	Unit  string
 	Value Num
 }
 
-// flux is the flux in the unit the fixture names: Jy, erg, or nil.
-func (spec fluxSpec) flux() nilgai.Flux {
+// refusals tries the flux where NewDetection and NewUpperLimit take one,
+// beside a good flux of its kind from the world, and says which refused
+// it. The fixture names the kind as "Jy" or "erg".
+func (spec fluxSpec) refusals(test *testing.T, read world,
+	through filter) refused {
+	test.Helper()
+	bad := float64(spec.Value)
 	switch spec.Unit {
 	case "Jy":
-		return nilgai.FluxDensity(spec.Value)
+		good := float64(read.Density.Value)
+		return refusalsOf(through, nilgai.Jansky(bad), nilgai.Jansky(good))
 	case "erg":
-		return nilgai.EnergyFlux(spec.Value)
+		good := float64(read.Energy.Value)
+		return refusalsOf(through, nilgai.ErgPerSecPerCm2(bad),
+			nilgai.ErgPerSecPerCm2(good))
 	}
-	return nil
+	test.Fatalf("%s: unit %q is not Jy or erg", spec.Name, spec.Unit)
+	return refused{}
 }
 
-// world is testdata/world.json.
+// refused says where a bad flux was refused: as a detection's value, as
+// its error, and as an upper limit.
+type refused struct{ value, err, limit bool }
+
+// eitherFlux is a FluxDensity or an EnergyFlux as a type parameter, as
+// NewDetection and NewUpperLimit take one.
+type eitherFlux interface {
+	nilgai.FluxDensity | nilgai.EnergyFlux
+	nilgai.Flux
+}
+
+// refusalsOf tries bad as a detection's value and error beside good, and
+// as an upper limit. A refusal counts only when it gives no measurement.
+func refusalsOf[Of eitherFlux](through filter, bad, good Of) refused {
+	value, asValue := nilgai.NewDetection(through.name, through.first,
+		through.last, bad, good)
+	sigma, asError := nilgai.NewDetection(through.name, through.first,
+		through.last, good, bad)
+	limit, asLimit := nilgai.NewUpperLimit(through.name, through.first,
+		through.last, bad)
+	return refused{value == nil && asValue != nil,
+		sigma == nil && asError != nil, limit == nil && asLimit != nil}
+}
+
+// world holds testdata/world.json.
 type world struct {
 	W1, W2      bandSpec
 	Position    struct{ RA, Dec Num }
@@ -136,17 +170,11 @@ type world struct {
 		File, Column, Text string
 		Row                int
 	}
-	Filters []struct {
-		Name        string
-		Lo, Hi      Num
-		First, Last int
-		OnEdge      string
-	}
-	BadBands       []bandSpec
 	WhenOk         []Num
 	WhenRefused    []Num
 	InvalidNumbers []int
 	BadFluxes      []fluxSpec
+	InSI           struct{ Jansky, ErgPerSecPerCm2, Rel Num }
 }
 
 // loadWorld reads the world fixture.
@@ -157,7 +185,7 @@ func loadWorld(test *testing.T) world {
 	return read
 }
 
-// position builds the fixture's position.
+// position returns the fixture's position.
 func (read world) position(test *testing.T) nilgai.Position {
 	test.Helper()
 	position, err := nilgai.NewPosition(float64(read.Position.RA),
@@ -168,7 +196,7 @@ func (read world) position(test *testing.T) nilgai.Position {
 	return position
 }
 
-// ellipse builds the fixture's error ellipse.
+// ellipse returns the fixture's error ellipse.
 func (read world) ellipse(test *testing.T) nilgai.ErrorEllipse {
 	test.Helper()
 	spec := read.Ellipse
@@ -181,22 +209,22 @@ func (read world) ellipse(test *testing.T) nilgai.ErrorEllipse {
 	return ellipse
 }
 
-// density builds a flux-density detection through the filter.
+// density returns a flux-density detection through the filter.
 func (read world) density(
 	test *testing.T,
 	through filter,
 ) nilgai.Measurement {
 	test.Helper()
+	value, sigma := float64(read.Density.Value), float64(read.Density.Error)
 	measurement, err := nilgai.NewDetection(through.name, through.first,
-		through.last, nilgai.FluxDensity(read.Density.Value),
-		nilgai.FluxDensity(read.Density.Error))
+		through.last, nilgai.Jansky(value), nilgai.Jansky(sigma))
 	if err != nil {
 		test.Fatal(err)
 	}
-	return measurement
+	return *measurement
 }
 
-// look builds a flux-density detection through the filter at the MJD
+// look returns a flux-density detection through the filter at the MJD
 // given.
 func (read world) look(test *testing.T, through filter,
 	mjd Num) nilgai.Measurement {

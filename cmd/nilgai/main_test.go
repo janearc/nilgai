@@ -3,27 +3,41 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"image/png"
 	"os"
 	"strings"
 	"testing"
 )
 
-// pzm's exit codes: the verb ran, the verb failed, nothing could be run.
+// pzm's exit codes. The verb ran, the verb failed, or nothing
+// could be run.
 const (
 	exitRan = iota
 	exitFailed
 	exitNothingRan
 )
 
-// Version on a binary that game did not build.
-func Example_version() {
-	var out bytes.Buffer
-	code := run([]string{"version"}, &out, &out, "")
-	fmt.Print(out.String())
-	fmt.Println(code)
+// nothingToRead returns standard input for a verb that reads none.
+func nothingToRead() *strings.Reader { return strings.NewReader("") }
+
+// Example_show runs show on the real searches around Sgr A*. The picture
+// is a png of the size asked for.
+func Example_show() {
+	var out, errs bytes.Buffer
+	code := run([]string{"show",
+		"--chandra", "testdata/chandra-sgra.tsv",
+		"--allwise", "testdata/allwise-sgra.csv",
+		"--ra", "266.4168371", "--dec", "-29.0078106",
+		"--width", "12", "--pixels", "300"},
+		nothingToRead(), &out, &errs, "")
+	picture, err := png.Decode(&out)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(code, picture.Bounds(), errs.Len())
 	// Output:
-	// nilgai unstamped
-	// 0
+	// 0 (0,0)-(300,300) 0
 }
 
 func TestEveryVerbHasItsExample(test *testing.T) {
@@ -38,29 +52,14 @@ func TestToolIsDeclaredRight(test *testing.T) {
 	}
 }
 
-func TestVersionSaysAStampedBuild(test *testing.T) {
-	for _, stamp := range []string{"abc1234", "deadbee"} {
-		var out bytes.Buffer
-		code := run([]string{"version"}, &out, &out, stamp)
-		if code != exitRan || out.String() != "nilgai "+stamp+"\n" {
-			test.Errorf("stamp %q: %d, %q", stamp, code, out.String())
-		}
-	}
-}
-
-func TestTheFlagFormOfAVerbIsTheVerb(test *testing.T) {
-	var out bytes.Buffer
-	if code := run([]string{"--version"}, &out, &out, ""); code != exitRan ||
-		out.String() != "nilgai unstamped\n" {
-		test.Errorf("--version: %d, %q", code, out.String())
-	}
-}
-
+// TestAnythingElseIsRefused checks that pzm refuses any verb but show.
+// For example, version is not a verb, because pzm's --age says which
+// build this is.
 func TestAnythingElseIsRefused(test *testing.T) {
-	for _, args := range [][]string{{"read"}, {"version", "--loud"},
-		{"--flag"}} {
+	for _, args := range [][]string{{"read"}, {"version"},
+		{"--version"}, {"--flag"}} {
 		var out, errs bytes.Buffer
-		code := run(args, &out, &errs, "")
+		code := run(args, nothingToRead(), &out, &errs, "")
 		if code != exitNothingRan ||
 			strings.Contains(out.String(), "nilgai ") {
 			test.Errorf("%v: code %d, out %q", args, code, out.String())
@@ -68,17 +67,10 @@ func TestAnythingElseIsRefused(test *testing.T) {
 	}
 }
 
-// closedWriter refuses every write.
+// closedWriter is a writer that refuses every write.
 type closedWriter struct{}
 
 // Write fails as a closed file does.
 func (closedWriter) Write([]byte) (written int, err error) {
 	return written, os.ErrClosed
-}
-
-func TestVersionFailsWhenItCannotWrite(test *testing.T) {
-	var errs bytes.Buffer
-	if code := run([]string{"version"}, closedWriter{}, &errs, ""); code != exitFailed {
-		test.Errorf("a closed output: code %d", code)
-	}
 }

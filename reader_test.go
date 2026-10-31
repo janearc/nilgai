@@ -12,7 +12,8 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// The mocks satisfy the interfaces they stand for.
+// MockFermiReader and the other mocks are checked here, at compile time,
+// against the interfaces they stand for.
 var (
 	_ nilgai.FermiReader   = (*mocks.MockFermiReader)(nil)
 	_ nilgai.MeerKATReader = (*mocks.MockMeerKATReader)(nil)
@@ -20,16 +21,18 @@ var (
 	_ nilgai.NEOWISEReader = (*mocks.MockNEOWISEReader)(nil)
 )
 
-// yielded is one item a mock reader gives, or the error in its place.
+// yielded holds one item that a mock reader yields, or the error that
+// takes its place.
 type yielded[Item any] struct {
 	item Item
 	err  error
 }
 
-// replay plays a list of yielded items to the caller of a sequence.
+// replay holds a list of yielded items to play to the caller of a
+// sequence.
 type replay[Item any] struct{ items []yielded[Item] }
 
-// play yields the items in order, stopping when the caller does.
+// play yields the items in order and stops when the caller does.
 func (played replay[Item]) play(yield func(Item, error) bool) {
 	for _, each := range played.items {
 		if !yield(each.item, each.err) {
@@ -38,16 +41,16 @@ func (played replay[Item]) play(yield func(Item, error) bool) {
 	}
 }
 
-// sequence is the iterator a mock reader returns.
+// sequence returns the iterator that a mock reader returns.
 func sequence[Item any](items []yielded[Item]) iter.Seq2[Item, error] {
 	return replay[Item]{items: items}.play
 }
 
-// sourcesAndAnError is a good source followed by a row error.
-func sourcesAndAnError(test *testing.T) ([]yielded[nilgai.Source], error) {
+// sourcesAndAnError returns a good source followed by a row error.
+func sourcesAndAnError(test *testing.T) ([]yielded[*nilgai.Source], error) {
 	test.Helper()
 	read := loadWorld(test)
-	band := read.W1.build(test)
+	band := read.W1.build()
 	detection := read.density(test, band)
 	got, err := source(test, read, []nilgai.Measurement{detection})
 	if err != nil {
@@ -56,10 +59,10 @@ func sourcesAndAnError(test *testing.T) ([]yielded[nilgai.Source], error) {
 	spec := read.RowError
 	bad := nilgai.NewRowError(spec.File, spec.Row, spec.Column,
 		errors.New("bad"))
-	return []yielded[nilgai.Source]{{item: got}, {err: bad}}, bad
+	return []yielded[*nilgai.Source]{{item: got}, {err: bad}}, bad
 }
 
-// drain reads a whole sequence of sources.
+// drain reads a whole sequence of sources and returns what it yielded.
 func drain[Item any](
 	items iter.Seq2[Item, error],
 ) (got []Item, errs []error) {
@@ -70,7 +73,7 @@ func drain[Item any](
 	return got, errs
 }
 
-// failures is the errors among errs that are not nil.
+// failures returns the errors among errs that are not nil.
 func failures(errs []error) []error {
 	return slices.DeleteFunc(slices.Clone(errs), isNil)
 }
@@ -88,7 +91,7 @@ func TestSourceReadersYieldSourcesAndRowErrors(test *testing.T) {
 	meerkat.EXPECT().Read("in", gomock.Any()).Return(sequence(items))
 	chandra.EXPECT().Read("in", gomock.Any()).Return(sequence(items))
 	in := strings.NewReader("")
-	for name, seq := range map[string]iter.Seq2[nilgai.Source, error]{
+	for name, seq := range map[string]iter.Seq2[*nilgai.Source, error]{
 		"fermi":   fermi.Read("in", in),
 		"meerkat": meerkat.Read("in", in),
 		"chandra": chandra.Read("in", in),
@@ -97,6 +100,12 @@ func TestSourceReadersYieldSourcesAndRowErrors(test *testing.T) {
 		failed := failures(errs)
 		if len(got) != len(items) || !slices.Equal(failed, []error{bad}) {
 			test.Errorf("%s: %v", name, errs)
+		}
+		for place, each := range got {
+			if (each == nil) != (errs[place] != nil) {
+				test.Errorf("%s: row %d: a source %v beside %v", name,
+					place, each, errs[place])
+			}
 		}
 	}
 }
@@ -109,7 +118,7 @@ func TestNEOWISEReaderYieldsLightCurves(test *testing.T) {
 	}
 	reader := mocks.NewMockNEOWISEReader(gomock.NewController(test))
 	reader.EXPECT().Read("w.xml", gomock.Any()).Return(sequence(
-		[]yielded[nilgai.LightCurve]{{item: first}, {item: first}}))
+		[]yielded[*nilgai.LightCurve]{{item: first}, {item: first}}))
 	in := strings.NewReader("")
 	seq := reader.Read("w.xml", in)
 	got, errs := drain(seq)
@@ -119,13 +128,14 @@ func TestNEOWISEReaderYieldsLightCurves(test *testing.T) {
 	}
 }
 
-// A reader that cannot read its input says so, and a caller that stops
-// at the failure sees nothing after it.
+// TestReadersEndOnAnInputFailure checks that a reader that cannot read its
+// input says so, and that a caller that stops at the failure sees nothing
+// after it.
 func TestReadersEndOnAnInputFailure(test *testing.T) {
 	items, _ := sourcesAndAnError(test)
 	broken := errors.New("input ended early")
 	reader := mocks.NewMockFermiReader(gomock.NewController(test))
-	played := append([]yielded[nilgai.Source]{{err: broken}}, items...)
+	played := append([]yielded[*nilgai.Source]{{err: broken}}, items...)
 	reader.EXPECT().Read("in", gomock.Any()).Return(sequence(played))
 	var seen []error
 	for _, err := range reader.Read("in", strings.NewReader("")) {

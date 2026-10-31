@@ -1,0 +1,8 @@
+{
+  "source": "WISE All-Sky Release Explanatory Supplement, section IV.4.h (Photometric Calibration), Table 1, column F_nu0 (https://wise2.ipac.caltech.edu/docs/release/allsky/expsup/sec4_4h.html): the flux density of a Vega magnitude of zero, which that section says may be used to convert WISE magnitudes to Jy for most sources, and gives a colour correction for steeply rising spectra, which nilgai does not apply. The same numbers are in Table 9 of that section, credited to Jarrett et al. 2011, ApJ 735, 112. The table is an image (figures/sec4_4ht1.png on that site); all four values were read from a saved copy of it and none is recalled. W1 and W2 were here before W3 and W4, credited to Jarrett et al. 2011 Table 1, which was not read; they agree with the Supplement.",
+  "unit": "Jy",
+  "W1": 309.540,
+  "W2": 171.787,
+  "W3": 31.674,
+  "W4": 8.363
+}

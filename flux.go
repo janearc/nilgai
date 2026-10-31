@@ -1,56 +1,69 @@
 package nilgai
 
-import "fmt"
+import (
+	"fmt"
 
-// Unit names the unit of a flux. Two fluxes of different units are
-// never added, compared or paired.
-type Unit string
-
-const (
-	// Jansky is the unit of flux density, Jy: 1e-26 W/m^2/Hz.
-	Jansky Unit = "Jy"
-	// ErgPerSecPerCm2 is the unit of energy flux, erg/s/cm^2.
-	ErgPerSecPerCm2 Unit = "erg/s/cm^2"
+	"github.com/janearc/libtheme-css/primitives/length"
+	"github.com/janearc/libtheme-css/primitives/si"
 )
 
-// Flux is a brightness with its unit in its type. Only FluxDensity and
-// EnergyFlux are Fluxes. Radio and infrared catalogues give flux
-// density; gamma-ray and X-ray catalogues give energy flux. Converting
-// between the two needs a bandwidth and nilgai does not guess one.
-type Flux interface {
-	// Unit says which unit Value is in.
-	Unit() Unit
-	// Value is the number, in Unit.
-	Value() float64
-}
+// Flux is a FluxDensity or an EnergyFlux, and nothing else can be one.
+// A caller reads a Flux by switching on its type, so its number never
+// leaves it without saying which of the two it is.
+//
+// Radio and infrared catalogues give flux density, and gamma-ray and
+// X-ray catalogues give energy flux. Converting between the two needs a
+// bandwidth, and nilgai does not guess one.
+type Flux interface{ flux() }
 
-// FluxDensity is a flux density in Jy.
+// FluxDensity is a flux density in watts a square metre a hertz. Jansky
+// makes one from the janskys a catalogue gives.
 type FluxDensity float64
 
-// Unit is Jansky.
-func (FluxDensity) Unit() Unit { return Jansky }
-
-// Value is the flux density in Jy.
-func (density FluxDensity) Value() float64 { return float64(density) }
-
-// EnergyFlux is an energy flux in erg/s/cm^2.
+// EnergyFlux is an energy flux in watts a square metre. ErgPerSecPerCm2
+// makes one from the erg/s/cm^2 a catalogue gives.
 type EnergyFlux float64
 
-// Unit is ErgPerSecPerCm2.
-func (EnergyFlux) Unit() Unit { return ErgPerSecPerCm2 }
+// flux makes FluxDensity a Flux.
+func (FluxDensity) flux() {}
 
-// Value is the energy flux in erg/s/cm^2.
-func (energy EnergyFlux) Value() float64 { return float64(energy) }
+// flux makes EnergyFlux a Flux.
+func (EnergyFlux) flux() {}
 
-// checkFlux refuses a missing flux, one that is not a finite number, or
-// one below zero. what names the flux in the message.
-func checkFlux(what string, flux Flux) error {
-	if flux == nil {
-		return fmt.Errorf("%s is missing", what)
+// oneFlux is FluxDensity or EnergyFlux as a type parameter. A constructor
+// that takes a flux and its error as one oneFlux takes two of a kind.
+type oneFlux interface {
+	FluxDensity | EnergyFlux
+	Flux
+}
+
+// wattsPerSquareMetreHertzInAJansky is defined: the IAU defines the
+// jansky as 1e-26 W/m^2/Hz.
+const wattsPerSquareMetreHertzInAJansky = 1e-26
+
+// joulesInAnErg is defined: the erg is the cgs unit of energy, 1e-7 J.
+const joulesInAnErg = 1e-7
+
+// Jansky returns janskys as a FluxDensity.
+func Jansky(janskys float64) FluxDensity {
+	return FluxDensity(janskys * wattsPerSquareMetreHertzInAJansky)
+}
+
+// ErgPerSecPerCm2 returns ergs a second a square centimetre as an
+// EnergyFlux.
+func ErgPerSecPerCm2(ergs float64) EnergyFlux {
+	centimetre := si.Centi(length.Metre)
+	return EnergyFlux(ergs * joulesInAnErg / (centimetre * centimetre))
+}
+
+// whyNotAFlux returns why a flux cannot be measured: it is not a finite
+// number, or it is below zero. It returns nil for a flux that can be.
+func whyNotAFlux(flux float64) error {
+	if !Finite(flux) {
+		return fmt.Errorf("%v is not a finite number", flux)
 	}
-	if !notBelowNone(flux.Value()) {
-		return fmt.Errorf("%s %v %s must be finite and not below zero",
-			what, flux.Value(), flux.Unit())
+	if flux < none {
+		return fmt.Errorf("%v is below zero", flux)
 	}
 	return nil
 }

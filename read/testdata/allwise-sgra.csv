@@ -1,0 +1,3 @@
+designation,ra,dec,sigra,sigdec,sigradec,w1mpro,w1sigmpro,w2mpro,w2sigmpro,cc_flags,ph_qual
+J174539.58-290025.7,266.4149188,-29.0071596,0.0159,0.2692,-0.0074,0.227,0.426,6.050,,dpd0,CUBX
+J174540.04-290022.9,266.4168443,-29.0063824,0.1622,0.1748,0.0651,-0.236,0.406,6.590,,hdh0,CUAX

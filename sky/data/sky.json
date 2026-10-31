@@ -1,0 +1,20 @@
+{
+  "source": "How nilgai draws the sky. The ground is libreadme's aqua theme (themes/aqua.css, --ground): a pale ground with dark ink, so nothing blooms. Instruments are told apart by lightness first and hue second: each ink keeps its profile's hue, and libreadme's solver sets its lightness so its contrast against the ground is the one given here. The contrasts are picked, in spectral order, darkest at the shortest wavelengths; none may fall under the reader's floor for scanned marks (the profile's chip_min), and the mark, set in the reader's prose band, reads first. within is how near a contrast must land, as a share of it. line, dot and points are picked: pixels for a line's and a centre's width, and points drawn around an ellipse. cross is the mark's arm, picked, as a share of the picture's width. gap is the pixels between panels side by side, picked, and between is their colour: the aqua theme's --surface-1, so the panels read as tiles. pixelsMax is the most pixels across one panel, picked: a panel of 4096 is a square of 4096 by 4096 four-byte pixels, some 67 megabytes, and a request past it is more likely a slip than a wish.",
+  "ground": "#a3ffff",
+  "mark": "#808080",
+  "contrast": {
+    "fermi": 9,
+    "chandra": 7.5,
+    "neowise": 6.3,
+    "alma": 5.3,
+    "meerkat": 4.6
+  },
+  "within": 0.04,
+  "line": 2,
+  "dot": 5,
+  "points": 720,
+  "cross": 0.04,
+  "gap": 24,
+  "pixelsMax": 4096,
+  "between": "#7fe0e6"
+}

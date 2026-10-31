@@ -1,0 +1,40 @@
+{
+  "source": "nilgai's false colour. Each instrument's band is written in its own units, as its paper writes it, and shown as a slice of visible light. The bands are cited; the hues are chosen, not measured, in spectral order so shorter looks bluer, clear of the dim ends of the eye. Retune the hues here.",
+  "profiles": [
+    {
+      "name": "fermi",
+      "band": "4FGL-DR4 catalogue range, 50 MeV to 1 TeV (the release is DR4, Ballet et al. 2023, arXiv 2307.12546; the column definitions are DR3's, Abdollahi et al. 2022, ApJS 260, 53)",
+      "from": {"value": 50, "unit": "MeV"},
+      "to": {"value": 1, "unit": "TeV"},
+      "shown": {"lo": 445, "hi": 460}
+    },
+    {
+      "name": "chandra",
+      "band": "Chandra Source Catalog broad band b, 0.5 to 7 keV (Evans et al. 2010, ApJS 189, 37)",
+      "from": {"value": 0.5, "unit": "keV"},
+      "to": {"value": 7, "unit": "keV"},
+      "shown": {"lo": 470, "hi": 495}
+    },
+    {
+      "name": "neowise",
+      "band": "WISE W1 and W2 together, about 2.8 to 5.3 um; edges approximate until read from Wright et al. 2010, AJ 140, 1868",
+      "from": {"value": 2.8, "unit": "um"},
+      "to": {"value": 5.3, "unit": "um"},
+      "shown": {"lo": 520, "hi": 550}
+    },
+    {
+      "name": "alma",
+      "band": "ALMA band 3, 84 to 116 GHz",
+      "from": {"value": 84, "unit": "GHz"},
+      "to": {"value": 116, "unit": "GHz"},
+      "shown": {"lo": 565, "hi": 585}
+    },
+    {
+      "name": "meerkat",
+      "band": "MeerKAT L band, 856 to 1712 MHz (Heywood et al. 2022, ApJ 925, 165)",
+      "from": {"value": 856, "unit": "MHz"},
+      "to": {"value": 1712, "unit": "MHz"},
+      "shown": {"lo": 600, "hi": 640}
+    }
+  ]
+}

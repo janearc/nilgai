@@ -43,10 +43,10 @@ func (m *MockFermiReader) EXPECT() *MockFermiReaderMockRecorder {
 }
 
 // Read mocks base method.
-func (m *MockFermiReader) Read(name string, in io.Reader) iter.Seq2[nilgai.Source, error] {
+func (m *MockFermiReader) Read(name string, in io.Reader) iter.Seq2[*nilgai.Source, error] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read", name, in)
-	ret0, _ := ret[0].(iter.Seq2[nilgai.Source, error])
+	ret0, _ := ret[0].(iter.Seq2[*nilgai.Source, error])
 	return ret0
 }
 

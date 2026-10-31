@@ -1,0 +1,17 @@
+# name		Source name in the format '2CXO Jhhmmss.s{+|-}ddmmss[X]'
+# ra	deg	Source position, ICRS right ascension
+# dec	deg	Source position, ICRS declination
+# err_ellipse_r0	arcsec	Major radius of the 95% confidence level position error ellipse
+# err_ellipse_r1	arcsec	Minor radius of the 95% confidence level position error ellipse
+# err_ellipse_ang	deg	Position angle (ref. local true north) of the major axis of the 95% confidence level error ellipse
+# flux_aper_b	erg/s/cm**2	Aperture-corrected net energy flux inferred from the source region aperture, best estimate derived from the longest block of a multi-band, flux-ordered Bayesian Block analysis of the contributing observations, and calculated by counting X-ray events; ACIS
+# flux_aper_lolim_b	erg/s/cm**2	Aperture-corrected net energy flux inferred from the source region aperture, best estimate derived from the longest block of a multi-band, flux-ordered Bayesian Block analysis of the contributing observations, and calculated by counting X-ray events (68% l
+# flux_aper_hilim_b	erg/s/cm**2	Aperture-corrected net energy flux inferred from the source region aperture, best estimate derived from the longest block of a multi-band, flux-ordered Bayesian Block analysis of the contributing observations, and calculated by counting X-ray events (68% u
+name	ra	dec	err_ellipse_r0	err_ellipse_r1	err_ellipse_ang	flux_aper_b	flux_aper_lolim_b	flux_aper_hilim_b
+2CXO J174539.7-290029	266.41576125921824	-29.0082474468339	0.7100194504827151	0.7100194504827151	0.0	3.5314739485308E-14	3.4425451437057E-14	3.6148447030542E-14
+2CXO J174539.8-290020	266.41584057730665	-29.005563387887914	0.7099063475767553	0.7099130011876799	0.0	1.0229363982317E-13	1.0063330029974E-13	1.0385020812638E-13
+2CXO J174539.8-290022	266.415976660109	-29.006252515852914	0.7132982554833119	0.7133114993651763	0.0	2.0114511788587E-13	1.9398573001094E-13	2.083045057608E-13
+2CXO J174540.0-290028	266.4168434014514	-29.007799335872484	0.71013253537476	0.7100194504827151	119.0299840291218	1.2987683957158E-13	1.2570096301492E-13	1.3379172384344E-13
+2CXO J174540.1-290029	266.41736387329445	-29.008273148549108	0.7099130011876799	0.7099130011876799	0.0	2.3468557998672E-14	2.196215868826E-14	2.4880807352182E-14
+2CXO J174540.4-290036	266.41861435042733	-29.010061000676423	0.7167927349526092	0.713523368043088	77.67059889077655	2.9422256533197E-15	2.5861128298028E-15	3.2983384768367E-15
+2CXO J174540.7-290035	266.4199679163347	-29.009867557997524	0.7207291677691685	0.7196535537926136	162.57867706985775	6.250123074755E-15	5.5369262749951E-15	6.963319874515E-15

@@ -1,5 +1,5 @@
 # vim: set filetype=game:
-# game: nilgai, one source record for four catalogues
+# game: nilgai, one source record for the catalogues
 #
 # name says which project this is. the builder's config has a block for
 # it that says where its road is; this file never names a remote.

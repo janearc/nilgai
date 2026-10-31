@@ -1,0 +1,64 @@
+{
+  "source": "units: each value and unit and the wavelength it comes to, from hc = 1239.84198433 eV nm and c = 299792458 m/s (both exact in the si) and the si prefixes. bad: whole profile documents nilgai must refuse. sameTo is picked: a part in a million million, the last few digits a float64 can disagree in. fermi is 1 TeV and 50 MeV as wavelengths.",
+  "sameTo": 1e-12,
+  "names": ["fermi", "chandra", "neowise", "alma", "meerkat"],
+  "fermi": {"lo": 1.2398419843320026e-9, "hi": 2.4796839686640052e-5},
+  "units": [
+    {"value": 1, "unit": "m", "nm": 1e9},
+    {"value": 21.106, "unit": "cm", "nm": 2.1106e8},
+    {"value": 1, "unit": "mm", "nm": 1e6},
+    {"value": 3.4, "unit": "um", "nm": 3400},
+    {"value": 550, "unit": "nm", "nm": 550},
+    {"value": 1, "unit": "eV", "nm": 1239.8419843320026},
+    {"value": 1, "unit": "keV", "nm": 1.2398419843320026},
+    {"value": 50, "unit": "MeV", "nm": 2.4796839686640052e-5},
+    {"value": 1, "unit": "GeV", "nm": 1.2398419843320026e-6},
+    {"value": 1, "unit": "TeV", "nm": 1.2398419843320026e-9},
+    {"value": 1, "unit": "PeV", "nm": 1.2398419843320026e-12},
+    {"value": 2, "unit": "m", "nm": 2e9},
+    {"value": 2, "unit": "eV", "nm": 619.9209921660013},
+    {"value": 5, "unit": "Hz", "nm": 5.99584916e16},
+    {"value": 1, "unit": "Hz", "nm": 2.99792458e17},
+    {"value": 1, "unit": "kHz", "nm": 2.99792458e14},
+    {"value": 1, "unit": "MHz", "nm": 2.99792458e11},
+    {"value": 1, "unit": "GHz", "nm": 2.99792458e8},
+    {"value": 1, "unit": "THz", "nm": 2.99792458e5}
+  ],
+  "unitsRefused": [
+    {"value": 1, "unit": "furlong"},
+    {"value": 1, "unit": "xeV"},
+    {"value": 1, "unit": ""},
+    {"value": 0, "unit": "keV"},
+    {"value": -1, "unit": "m"},
+    {"value": "NaN", "unit": "m"},
+    {"value": "Inf", "unit": "GHz"},
+    {"value": "-Inf", "unit": "GHz"},
+    {"value": "NaN", "unit": "eV"},
+    {"value": 5e-324, "unit": "Hz"},
+    {"value": 5e-324, "unit": "eV"}
+  ],
+  "bad": [
+    {"name": "not a document", "doc": "profiles"},
+    {"name": "no name", "doc": {"profiles": [
+      {"name": "", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 470, "hi": 490}}]}},
+    {"name": "a unit nilgai cannot read", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "furlong"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 470, "hi": 490}}]}},
+    {"name": "a far end it cannot read", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 0, "unit": "keV"}, "shown": {"lo": 470, "hi": 490}}]}},
+    {"name": "a band of no width", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 1000, "unit": "eV"}, "shown": {"lo": 470, "hi": 490}}]}},
+    {"name": "shown backwards", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 490, "hi": 470}}]}},
+    {"name": "shown with no width", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 480, "hi": 480}}]}},
+    {"name": "a near end it cannot read", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 0, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 470, "hi": 490}}]}},
+    {"name": "shown below the visible","doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 100, "hi": 490}}]}},
+    {"name": "shown above the visible", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 470, "hi": 2000}}]}},
+    {"name": "named twice", "doc": {"profiles": [
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 470, "hi": 490}},
+      {"name": "x", "from": {"value": 1, "unit": "keV"}, "to": {"value": 2, "unit": "keV"}, "shown": {"lo": 470, "hi": 490}}]}}
+  ]
+}

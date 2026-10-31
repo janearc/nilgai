@@ -14,23 +14,6 @@
   ],
   "span": {"first": 56000, "last": 57000, "w2Looks": 1},
   "rowError": {"file": "4fgl.fits", "row": 7, "column": "RAJ2000", "text": "4fgl.fits: row 7, column RAJ2000: not a number"},
-  "filters": [
-    {"name": "W1", "lo": 2800, "hi": 3800, "first": 274, "last": 285},
-    {"name": "inside one band", "lo": 2800, "hi": 2801, "first": 274, "last": 274},
-    {"name": "high edge on 2048 nm, the low edge of band 264", "lo": 2000, "hi": 2048, "first": 263, "last": 263, "onEdge": "hi"},
-    {"name": "low edge on 2048 nm, the low edge of band 264", "lo": 2048, "hi": 2100, "first": 264, "last": 264, "onEdge": "lo"}
-  ],
-  "badBands": [
-    {"name": "low zero", "lo": 0, "hi": 3800},
-    {"name": "low negative", "lo": -1, "hi": 3800},
-    {"name": "high zero", "lo": 2800, "hi": 0},
-    {"name": "high negative", "lo": 2800, "hi": -1},
-    {"name": "low NaN", "lo": "NaN", "hi": 3800},
-    {"name": "high NaN", "lo": 2800, "hi": "NaN"},
-    {"name": "high Inf", "lo": 2800, "hi": "Inf"},
-    {"name": "reversed edges", "lo": 3800, "hi": 2800},
-    {"name": "zero width", "lo": 3800, "hi": 3800}
-  ],
   "whenOk": [0, 56000.5],
   "whenRefused": [-1, "NaN", "Inf", "-Inf"],
   "invalidNumbers": [0, -1, 4, 100],
@@ -38,7 +21,12 @@
     {"name": "negative value", "unit": "Jy", "value": -1},
     {"name": "negative energy", "unit": "erg", "value": -1e-9},
     {"name": "NaN value", "unit": "Jy", "value": "NaN"},
-    {"name": "Inf value", "unit": "erg", "value": "Inf"},
-    {"name": "nil value", "unit": "nil", "value": 0}
-  ]
+    {"name": "Inf value", "unit": "erg", "value": "Inf"}
+  ],
+  "inSI": {
+    "source": "defined, not invented: the IAU defines the jansky as 1e-26 W/m^2/Hz, and the cgs erg is 1e-7 J, so 1 erg/s/cm^2 is 1e-3 W/m^2. rel is a part in a trillion, room for the rounding of a few float64 multiplications and nothing more",
+    "jansky": 1e-26,
+    "ergPerSecPerCm2": 1e-3,
+    "rel": 1e-12
+  }
 }

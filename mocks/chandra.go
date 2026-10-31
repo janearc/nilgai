@@ -43,10 +43,10 @@ func (m *MockChandraReader) EXPECT() *MockChandraReaderMockRecorder {
 }
 
 // Read mocks base method.
-func (m *MockChandraReader) Read(name string, in io.Reader) iter.Seq2[nilgai.Source, error] {
+func (m *MockChandraReader) Read(name string, in io.Reader) iter.Seq2[*nilgai.Source, error] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read", name, in)
-	ret0, _ := ret[0].(iter.Seq2[nilgai.Source, error])
+	ret0, _ := ret[0].(iter.Seq2[*nilgai.Source, error])
 	return ret0
 }
 

@@ -5,6 +5,17 @@
     {"name": "top of range", "ra": 359.999999, "dec": 90},
     {"name": "south pole", "ra": 10, "dec": -90}
   ],
+  "galactic": {
+    "source": "Galactic latitude b of a position, in degrees. The first three are real 4FGL-DR4 rows of gll_psc_v35.fit: RAJ2000 and DEJ2000 as the file has them (float32, so given to the digits the file prints) and its own GLAT column to float32's digits. The two poles are defined: the north Galactic pole is at the ICRS position 192.85948, 27.12825 and has b = 90, and the south pole is opposite it. tol is picked: the file's float32 positions put the computed b within 1.6e-5 degrees of GLAT over all 7195 rows of the real file, checked once by hand on 2026-10-30, and 1e-4 is wider than that and far finer than any Fermi ellipse.",
+    "tol": 1e-4,
+    "cases": [
+      {"name": "4FGL J1745.6-2859, the Galactic Centre source", "ra": 266.4147, "dec": -28.997, "lat":-0.038937435},
+      {"name": "4FGL J0004.0+5715, north of the plane in RA, south of it in b", "ra": 1.0017, "dec": 57.2578, "lat":-5.0228662},
+      {"name": "4FGL J0000.3-7355, far from the plane", "ra": 0.0983, "dec": -73.922, "lat":-42.729538},
+      {"name": "the north Galactic pole", "ra": 192.85948, "dec": 27.12825, "lat":90},
+      {"name": "the south Galactic pole", "ra": 12.85948, "dec": -27.12825, "lat":-90}
+    ]
+  },
   "refused": [
     {"name": "ra 360", "ra": 360, "dec": 0},
     {"name": "ra negative", "ra": -0.1, "dec": 0},
@@ -14,6 +25,8 @@
     {"name": "ra NaN", "ra": "NaN", "dec": 0},
     {"name": "dec NaN", "ra": 0, "dec": "NaN"},
     {"name": "ra Inf", "ra": "Inf", "dec": 0},
-    {"name": "dec -Inf", "ra": 0, "dec": "-Inf"}
+    {"name": "dec -Inf", "ra": 0, "dec": "-Inf"},
+    {"name": "ra -Inf", "ra": "-Inf", "dec": 0},
+    {"name": "dec Inf", "ra": 0, "dec": "Inf"}
   ]
 }
