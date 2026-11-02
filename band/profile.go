@@ -28,11 +28,11 @@ type ProfileSource interface {
 	Profiles() ([]radiation.Profile, error)
 }
 
-// Embedded is the ProfileSource that reads the profiles built into
-// nilgai, from data/profiles.json. NewEmbedded makes one.
+// Embedded reads the profiles built into Nilgai from data/profiles.json. Use
+// NewEmbedded to construct it.
 type Embedded struct{}
 
-// NewEmbedded is the ProfileSource of nilgai's built-in profiles.
+// NewEmbedded constructs a source for the built-in profiles.
 func NewEmbedded() *Embedded { return &Embedded{} }
 
 // Profiles reads the embedded data/profiles.json.
@@ -40,9 +40,8 @@ func (Embedded) Profiles() ([]radiation.Profile, error) {
 	return Profiles()
 }
 
-// ProfileFile is data/profiles.json as it is written: a note on where it
-// comes from, and one entry for each instrument in the order the file
-// lists them.
+// ProfileFile represents data/profiles.json: a provenance note and an ordered
+// list of instruments with their colour mappings.
 type ProfileFile struct {
 	// Source says where the file's bands and hues come from. It is a
 	// note for the reader of the file and nilgai does not use it.
@@ -52,9 +51,8 @@ type ProfileFile struct {
 	Entries []ProfileEntry `json:"profiles"`
 }
 
-// ProfileEntry is one instrument in data/profiles.json: its name, its
-// band in the units of its paper, and the slice of visible light it is
-// shown in.
+// ProfileEntry records an instrument’s name, coverage in published units, and
+// the visible wavelength range used to display it.
 type ProfileEntry struct {
 	// Name is the instrument's name, such as "fermi". It is not empty
 	// and no other entry has it.
@@ -70,9 +68,8 @@ type ProfileEntry struct {
 	Shown radiation.Range `json:"shown"`
 }
 
-// NewProfileFile reads JSON shaped as data/profiles.json is. NewProfileFile
-// refuses JSON it cannot read, and a key the file does not have, naming
-// the key. NewProfileFile returns nil on a refusal.
+// NewProfileFile decodes JSON shaped like data/profiles.json. Malformed JSON
+// and unknown keys return nil and an error identifying the problem.
 func NewProfileFile(data []byte) (*ProfileFile, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
@@ -83,10 +80,9 @@ func NewProfileFile(data []byte) (*ProfileFile, error) {
 	return &file, nil
 }
 
-// Profiles checks every entry and gives one radiation.Profile for each,
-// in the file's order. Profiles refuses a name used twice, and anything
-// ProfileEntry.Profile refuses. Profiles returns every refusal together,
-// each naming its profile, and no profiles.
+// Profiles validates entries and returns radiation profiles in file order.
+// Duplicate names and invalid entries return all validation errors together,
+// each identifying its profile, with no partial profile list.
 func (file *ProfileFile) Profiles() ([]radiation.Profile, error) {
 	var refused []error
 	seen := map[string]bool{}
@@ -112,16 +108,10 @@ func (file *ProfileFile) Profiles() ([]radiation.Profile, error) {
 	return made, nil
 }
 
-// Profile checks the entry and gives its radiation.Profile. Profile
-// refuses:
-//
-//   - no name
-//   - an end it cannot read, naming which end and why
-//   - a band with no width
-//   - a shown range that runs backwards
-//   - a shown range that leaves visible light
-//
-// Profile returns nil on a refusal.
+// Profile validates the entry and constructs its radiation.Profile. An empty
+// name, unreadable endpoint, zero-width source band, reversed shown range, or
+// shown range outside visible light returns nil and an error. Endpoint errors
+// identify which value failed and why.
 func (entry ProfileEntry) Profile() (*radiation.Profile, error) {
 	if entry.Name == "" {
 		return nil, errors.New("it has no name")
@@ -152,15 +142,14 @@ func (entry ProfileEntry) Profile() (*radiation.Profile, error) {
 		Render: shown}, nil
 }
 
-// Profiles are nilgai's false colour, one libtheme radiation.Profile per
-// instrument, read from the embedded data/profiles.json in the order it
-// lists them.
+// Profiles returns the embedded false-colour profiles, one libtheme
+// radiation.Profile per instrument, in data/profiles.json order.
 func Profiles() ([]radiation.Profile, error) {
 	return ReadProfiles(profileData)
 }
 
-// ReadProfiles reads profiles from JSON shaped as data/profiles.json is,
-// and gives what NewProfileFile and ProfileFile.Profiles give.
+// ReadProfiles decodes and validates profile JSON by calling NewProfileFile and
+// ProfileFile.Profiles.
 func ReadProfiles(data []byte) ([]radiation.Profile, error) {
 	file, err := NewProfileFile(data)
 	if err != nil {

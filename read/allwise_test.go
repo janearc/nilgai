@@ -158,9 +158,8 @@ func TestAllWISEEllipses(test *testing.T) {
 	}
 }
 
-// TestAllWISEEllipsesPointTheRightWay is an anti-test. A needle along the
-// sky's north is not one along its east, and a tilt to the north-east is
-// not one to the south-east.
+// The ellipse checks must distinguish north from east and northeast from
+// southeast.
 func TestAllWISEEllipsesPointTheRightWay(test *testing.T) {
 	read := loadAllwise(test)
 	angles := map[string]float64{}
@@ -184,12 +183,11 @@ func TestAllWISEEllipsesPointTheRightWay(test *testing.T) {
 func TestAllWISEDetection(test *testing.T) {
 	read := loadAllwise(test)
 	flux := onlySource(test, read, read.Good).Measurements()[none]
-	value, valueIsDensity := janskys(flux.Value())
-	sigma, sigmaIsDensity := janskys(flux.Error())
 	if flux.IsUpperLimit() || flux.Kind() != nilgai.Detection ||
-		!valueIsDensity || !sigmaIsDensity {
-		test.Fatalf("W1 read as %+v, not a flux-density detection", flux)
+		flux.Value().Unit() != nilgai.Jansky || flux.Error() == nil {
+		test.Fatalf("W1 read as %+v, not a detection in Jy", flux)
 	}
+	value, sigma := fluxNumber(flux.Value()), fluxNumber(flux.Error())
 	if !near(value, read.Flux.Value, read.Flux.Rel) ||
 		!near(sigma, read.Flux.Error, read.Flux.Rel) {
 		test.Errorf("W1 read as %+v, want %v and %v", flux,
@@ -203,9 +201,9 @@ func TestAllWISEDetection(test *testing.T) {
 func TestAllWISEUpperLimit(test *testing.T) {
 	read := loadAllwise(test)
 	flux := onlySource(test, read, read.Limit.Row).Measurements()[none]
-	limit, isDensity := janskys(flux.Value())
+	limit := fluxNumber(flux.Value())
 	if !flux.IsUpperLimit() || flux.Kind() != nilgai.UpperLimit ||
-		flux.Error() != nil || !isDensity ||
+		flux.Error() != nil ||
 		!near(limit, read.Limit.Value, read.Limit.Rel) {
 		test.Errorf("%s read as %+v, want a limit of %v", read.Limit.Name,
 			flux, read.Limit.Value)
@@ -267,9 +265,8 @@ func TestAllWISERefusesTables(test *testing.T) {
 	}
 }
 
-// TestAllWISEStopsAtATornRow checks that a stray quote in the middle of a
-// table ends the read with one error that is not a row's. The rows before
-// it are read and none after.
+// A malformed quoted row must end parsing with one input-level error. Earlier
+// rows remain available; later rows are not read.
 func TestAllWISEStopsAtATornRow(test *testing.T) {
 	read := loadAllwise(test)
 	sources, errs := readAllwise(test, read, read.Good, read.Stray,
@@ -312,9 +309,8 @@ func TestAllWISEStopsAtABadRowWhenAsked(test *testing.T) {
 	}
 }
 
-// TestAllWISEReadsTheRealSearch checks that the real search around Sgr A*
-// reads whole, and that its sources are doubtful in W1, as their
-// contamination flags say.
+// The real Sgr A* search must read completely, with Doubtful W1 quality where
+// contamination flags indicate artefacts.
 func TestAllWISEReadsTheRealSearch(test *testing.T) {
 	read := loadAllwise(test)
 	file, err := fixtures.ReadFile("testdata/" + read.Sgra.File)

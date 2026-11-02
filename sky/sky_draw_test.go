@@ -52,7 +52,7 @@ func sourceAt(test *testing.T, catalogue nilgai.Catalogue,
 	}
 	var epoch nilgai.When
 	source, err := nilgai.NewSource(catalogue, "a source", at, ellipse,
-		epoch, []nilgai.Measurement{*flux})
+		epoch, []nilgai.Measurement{flux})
 	if err != nil {
 		test.Fatal(err)
 	}
@@ -81,8 +81,8 @@ var catalogues = map[nilgai.Catalogue]string{nilgai.Fermi: "fermi",
 	nilgai.Chandra: "chandra", nilgai.AllWISE: "neowise",
 	nilgai.NEOWISE: "neowise", nilgai.MeerKAT: "meerkat"}
 
-// distinct lists one catalogue for each instrument. AllWISE and NEOWISE
-// share an instrument, so only AllWISE is listed.
+// distinct lists one catalogue for each instrument. AllWISE and Neowise share
+// an instrument, so only AllWISE is listed.
 var distinct = []nilgai.Catalogue{nilgai.Fermi, nilgai.Chandra,
 	nilgai.AllWISE, nilgai.MeerKAT}
 
@@ -105,10 +105,9 @@ func markInk(test *testing.T, read skyFixture) colour.RGB {
 	return rgbAt(picture, read.middle(), read.middle())
 }
 
-// TestInksHoldTheFloorAndTheirAim checks that each instrument's drawn ink
-// holds the reader's floor against the ground, and lands near the contrast
-// that data/sky.json aims for. It measures the pixels drawn, not the
-// colour the solver meant.
+// Rendered pixels must meet the reader’s minimum contrast and remain near each
+// instrument’s configured target. Measuring the image catches differences
+// between requested and actual colours.
 func TestInksHoldTheFloorAndTheirAim(test *testing.T) {
 	read := loadSky(test)
 	aims, within := skyAims(test)
@@ -125,9 +124,8 @@ func TestInksHoldTheFloorAndTheirAim(test *testing.T) {
 	}
 }
 
-// TestInksAreNotTheGroundOrTheMark is an anti-test. No ink may be the
-// ground colour or the mark colour, and none may be in the reader's prose
-// band, which belongs to the mark alone.
+// Instrument colours must differ from the background and reference mark, and
+// stay outside the prose contrast band reserved for the mark.
 func TestInksAreNotTheGroundOrTheMark(test *testing.T) {
 	read := loadSky(test)
 	reader := readerProfile(test)
@@ -202,9 +200,8 @@ func TestOneInstrumentIsOneInk(test *testing.T) {
 	}
 }
 
-// TestMarkIsInTheProseBand checks that the mark's contrast against the
-// ground is in the reader's prose band, so the mark reads first, and
-// that it is higher than any instrument's.
+// The reference mark’s rendered contrast must lie in the reader’s prose band
+// and exceed every instrument’s contrast.
 func TestMarkIsInTheProseBand(test *testing.T) {
 	read := loadSky(test)
 	reader := readerProfile(test)
@@ -381,9 +378,7 @@ func TestDrawClipsASourceOnTheEdge(test *testing.T) {
 	}
 }
 
-// TestDrawDrawsWhatIsInsideAndHasAnInk is an anti-test. The same source
-// that TestDrawLeavesOutWhatIsOutsideOrHasNoInk leaves out is drawn in a
-// sky that has its profile.
+// Adding the missing profile must make the previously omitted source visible.
 func TestDrawDrawsWhatIsInsideAndHasAnInk(test *testing.T) {
 	read := loadSky(test)
 	ground := styleColour(test, "ground")
@@ -472,8 +467,8 @@ func TestStripSizesAndGaps(test *testing.T) {
 	}
 }
 
-// TestStripIsAsTallAsTheTallestInAnyPlace checks that a strip is as tall
-// as its tallest sky wherever that sky sits: first, in the middle or last.
+// Strip height must follow the tallest panel whether it appears first, in the
+// middle, or last.
 func TestStripIsAsTallAsTheTallestInAnyPlace(test *testing.T) {
 	read := loadSky(test)
 	first, second := read.Strip.First, read.Strip.Second

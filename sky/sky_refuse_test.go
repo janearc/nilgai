@@ -69,9 +69,8 @@ func TestReadSkyRefusesBadStyles(test *testing.T) {
 	}
 }
 
-// TestReadSkyTakesTheStylesThatHoldTheFloor is an anti-test. It checks
-// that ReadSky accepts the style nilgai ships, and a style whose contrast
-// sits exactly at the reader's floor.
+// The shipped style and targets exactly at the reader’s minimum must be
+// accepted.
 func TestReadSkyTakesTheStylesThatHoldTheFloor(test *testing.T) {
 	read := loadSky(test)
 	styles := map[string][]byte{
@@ -88,9 +87,8 @@ func TestReadSkyTakesTheStylesThatHoldTheFloor(test *testing.T) {
 	}
 }
 
-// TestReadSkyRefusesAMarkThatCannotReadFirst checks that NewSky refuses a
-// mark that no lightness can bring into the reader's prose band. The
-// fixture's band is one that no ground can give.
+// The reference mark must fail validation when no lightness can meet the
+// reader’s prose contrast band.
 func TestReadSkyRefusesAMarkThatCannotReadFirst(test *testing.T) {
 	read := loadSky(test)
 	reader := readerProfile(test)
@@ -105,9 +103,8 @@ func TestReadSkyRefusesAMarkThatCannotReadFirst(test *testing.T) {
 	}
 }
 
-// TestReadSkyHoldsTheReadersFloor is an anti-test. The floor comes from
-// the reader, not from a number of nilgai's own, so a reader whose floor
-// is above the style's lowest contrast makes NewSky refuse the style.
+// The minimum contrast must come from the reader profile. Raising that minimum
+// above the style’s lowest target must reject the style.
 func TestReadSkyHoldsTheReadersFloor(test *testing.T) {
 	read := loadSky(test)
 	reader := readerProfile(test)

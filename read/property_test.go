@@ -92,9 +92,8 @@ func (check properties) allwiseEllipse(property *rapid.T) {
 	}
 }
 
-// chandraSwap checks that the same ellipse, named with its radii the other
-// way round and its angle a quarter turn on, reads as the same ellipse. The
-// order the CSC writes its radii in then does not change what is read.
+// chandraSwap checks that swapping radii and rotating the angle a quarter-turn
+// preserves the same physical ellipse.
 func (check properties) chandraSwap(property *rapid.T) {
 	read := check.ranges
 	first := drawIn(property, read.Radius, "radius")
@@ -144,17 +143,16 @@ func TestChandraSwapProperty(test *testing.T) {
 	rapid.Check(test, newProperties(test).chandraSwap)
 }
 
-// TestChandraSwapPropertySeesAnUnturnedAngle is an anti-test. It checks
-// that the properties fail on a wrong ellipse. A reader that left the
-// angle alone on a swap would read the two radii orders a quarter turn
-// apart, so the two orders differ by a quarter turn if nothing is turned.
+// Swapping unequal axes without rotating the angle must fail the equivalence
+// check. This guards against a property test too weak to detect the orientation
+// error.
 func TestChandraSwapPropertySeesAnUnturnedAngle(test *testing.T) {
 	check := newProperties(test)
 	rapid.Check(test, check.unturnedDiffers)
 }
 
-// unturnedDiffers checks that reading the radii the other way round at the
-// same angle gives a different ellipse, a quarter turn apart.
+// unturnedDiffers checks that swapping unequal axes without rotating the angle
+// changes the ellipse’s orientation by a quarter-turn.
 func (check properties) unturnedDiffers(property *rapid.T) {
 	read := check.ranges
 	first := drawIn(property, read.Radius, "radius")

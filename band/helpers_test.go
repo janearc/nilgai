@@ -11,7 +11,7 @@ import (
 //go:embed testdata/*.json
 var fixtures embed.FS
 
-// none is the count of nothing, zero.
+// none is the zero count.
 const none = 0
 
 // one is the count of a single thing.
@@ -54,7 +54,7 @@ func (num *Num) special(text string) error {
 	return nil
 }
 
-// load reads testdata/name.json into into.
+// load reads testdata/name.json into the destination.
 func load(test *testing.T, name string, into any) {
 	test.Helper()
 	data, err := fixtures.ReadFile("testdata/" + name + ".json")

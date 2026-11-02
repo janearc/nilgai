@@ -68,17 +68,15 @@ const noFlags = 0
 // 4FGL.
 const extendedEnd = "e"
 
-// NewFermi returns a Fermi whose energy fluxes carry the libtheme bands
-// of the Energy_Flux100 filter in band/data/filters.json, or nil on a
-// refusal.
+// NewFermi constructs a 4FGL reader using the Energy_Flux100 filter edges in
+// band/data/filters.json. Invalid filter data returns nil and an error.
 func NewFermi() (*Fermi, error) {
 	return fermiOver(band.FilterBands(fermiFilterData))
 }
 
-// ReadFermi does what NewFermi does, with the filters given as JSON shaped
-// like band/data/filters.json. ReadFermi refuses filters that
-// band.ReadFilterBands refuses, and filters that lack Energy_Flux100, and
-// returns nil on a refusal.
+// ReadFermi constructs a reader with filter JSON in band/data/filters.json’s
+// format. Invalid filters or a missing Energy_Flux100 return nil and an error
+// from band.ReadFilterBands.
 func ReadFermi(filters []byte) (*Fermi, error) {
 	return fermiOver(band.ReadFilterBands(filters, fermiFilterData))
 }
@@ -174,17 +172,15 @@ func scanFermi(rows *fitsio.Rows, into *fermiRow) error {
 	return err
 }
 
-// fermiColumns lists the columns that a 4FGL file must have for nilgai to
-// read it, as the fits tags in scanFermi name them. When a column is
-// missing, fitsio leaves the field at zero without any error, and a zero
-// position or zero flags would be a reading nilgai made up.
+// fermiColumns lists required columns by the FITS tags used in scanFermi.
+// fitsio silently leaves absent columns at zero, so validate them before
+// reading: zero positions or flags must come from the catalogue itself.
 var fermiColumns = []string{"Source_Name", "RAJ2000", "DEJ2000",
 	fermiEllipseColumn, "Conf_95_SemiMinor", "Conf_95_PosAng",
 	"Energy_Flux100", "Unc_Energy_Flux100", fermiClassColumn,
 	fermiAssocColumn, fermiFlagsColumn}
 
-// fermiRows opens the point source table's rows. It refuses a table that
-// lacks a column nilgai reads.
+// fermiRows opens the point-source table after checking required columns.
 func fermiRows(in io.Reader) (*fitsio.Rows, error) {
 	file, err := fitsio.Open(in)
 	if err != nil {
@@ -203,9 +199,9 @@ func fermiRows(in io.Reader) (*fitsio.Rows, error) {
 	return table.Read(none, table.NumRows())
 }
 
-// source converts one row to a Source, or returns nil, the column that
-// could not be read, and why. When the nilgai record refuses the Source,
-// the error names no column.
+// source converts one row into the common record. On failure it returns nil,
+// the affected column, and the error. Record-level validation errors have no
+// column name.
 func (table Fermi) source(got fermiRow) (*nilgai.Source, string, error) {
 	position, err := nilgai.NewPosition(float64(got.ra), float64(got.dec))
 	if err != nil {
@@ -215,37 +211,28 @@ func (table Fermi) source(got fermiRow) (*nilgai.Source, string, error) {
 	if err != nil {
 		return nil, column, err
 	}
-	energy, energyError := float64(got.flux), float64(got.fluxError)
 	flux, err := nilgai.NewDetection(fermiFilter, table.first, table.last,
-		nilgai.ErgPerSecPerCm2(energy),
-		nilgai.ErgPerSecPerCm2(energyError))
+		nilgai.EnergyFlux(got.flux), nilgai.EnergyFlux(got.fluxError))
 	if err != nil {
 		return nil, "Energy_Flux100", err
 	}
 	name := strings.TrimSpace(got.name)
 	var epoch nilgai.When // 4FGL states no epoch for its positions
-	flagged, unkept := fermiFlagged(*flux, got)
+	flagged, unkept := fermiFlagged(flux, got)
 	source, err := nilgai.NewSource(nilgai.Fermi, name, position, ellipse,
 		epoch, flagged)
 	return source, "", errors.Join(unkept, err)
 }
 
-// fermiEllipse returns the row's 95% ellipse, converted from degrees to
-// arcseconds and scaled to one sigma. Its angle is brought into 0 to 360,
-// measured east of north.
+// fermiEllipse converts the row’s 95% ellipse from degrees to arcseconds and
+// scales it to one sigma. Its angle wraps into [0, 360), east of north.
 //
-// 4FGL gives no ellipse to two kinds of source:
-//   - an extended source, which has no point position
-//   - a point source whose position 4FGL fixes from outside, such as a
-//     nova or a pulsar
+// 4FGL omits all three ellipse fields for extended sources and sources whose
+// positions are fixed externally, such as novae or pulsars. These rows return
+// an error identifying the reason; no ellipse is invented.
 //
-// fermiEllipse refuses both, rather than make up an ellipse, and the error
-// says which kind it was. It says so only when all three ellipse columns
-// are missing.
-//
-// fermiEllipse refuses a row with only some of them missing, which is
-// neither kind of source, by naming the first column that is not a
-// number.
+// Partially missing ellipse fields are treated as invalid data. The error names
+// the first field that is not numeric.
 func fermiEllipse(got fermiRow) (ellipse nilgai.ErrorEllipse, column string,
 	err error) {
 	given := []struct {
@@ -290,10 +277,10 @@ func noFermiEllipse(name string) error {
 		"outside 4FGL has no ellipse in 4FGL")
 }
 
-// fermiFlagged returns the measurement with 4FGL's flags, class and
-// association kept, as kept does: a list of that one measurement, or nil
-// on a refusal. The quality is doubtful when any analysis flag is set, and
-// good when none is.
+// fermiFlagged preserves analysis flags, class, and association on the
+// measurement, returning a one-element slice through kept. Any analysis flag
+// makes quality Doubtful; no flags means Good. Validation errors return nil and
+// an error.
 func fermiFlagged(measurement nilgai.Measurement,
 	got fermiRow) ([]nilgai.Measurement, error) {
 	quality := nilgai.Good

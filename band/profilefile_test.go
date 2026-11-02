@@ -145,8 +145,8 @@ func TestAFileRefusesANameUsedTwice(test *testing.T) {
 	}
 }
 
-// TestAFileRefusesEverythingTogether is the anti-test: every refusal in a
-// file comes back together, each naming its profile, and no profiles do.
+// All invalid profile entries must be reported together by name, with no
+// partial profile list.
 func TestAFileRefusesEverythingTogether(test *testing.T) {
 	file := goodFile()
 	file.Entries[none].From.Unit = "furlong"
@@ -163,9 +163,8 @@ func TestAFileRefusesEverythingTogether(test *testing.T) {
 	}
 }
 
-// TestReadingRefusesAKeyTheFileDoesNotHave is the anti-test: a key the
-// file does not have is refused at that key, with no file, whether it is
-// misspelled in an entry or in the file.
+// Unknown keys in either the file or an entry must produce an error naming the
+// key and no decoded file.
 func TestReadingRefusesAKeyTheFileDoesNotHave(test *testing.T) {
 	for key, doc := range map[string]string{
 		"frm":  `{"profiles": [{"name": "x", "frm": {}}]}`,

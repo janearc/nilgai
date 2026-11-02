@@ -7,14 +7,14 @@ import "errors"
 type Quality int
 
 const (
-	// qualityUnset is the zero Quality. It means no reading was made, and
-	// it must not pass as good.
+	// qualityUnset means no quality assessment was made. It must not be
+	// treated as Good.
 	qualityUnset Quality = iota
 	// Good means the catalogue's flags raise no doubt.
 	Good
-	// Doubtful means the catalogue's flags say to take care.
+	// Doubtful means catalogue flags indicate a possible issue.
 	Doubtful
-	// Bad means the catalogue's flags say the value is not to be trusted.
+	// Bad means catalogue flags indicate an unreliable measurement.
 	Bad
 )
 
@@ -41,9 +41,8 @@ type Flag struct {
 	name, value string
 }
 
-// NewFlag keeps a flag as the catalogue gave it. The value may be empty,
-// because an empty cell is something the catalogue said. The column name
-// may not be empty.
+// NewFlag preserves a catalogue flag. The column name must be nonempty; an
+// empty value is allowed because it can carry catalogue meaning.
 func NewFlag(name, value string) (flag Flag, err error) {
 	if name == "" {
 		return flag, errors.New("flag has no column name")

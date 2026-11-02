@@ -2,16 +2,14 @@ package nilgai
 
 import "fmt"
 
-// When holds a time as a modified Julian date, or records that the time
-// is not known. The zero When is not known, which is how a source with no
-// single look says so.
+// When stores a modified Julian date or an unknown time. The zero value means
+// unknown, as for a source with no single observation time.
 type When struct {
 	mjd   float64
 	known bool
 }
 
-// NewWhen returns a When from an MJD. It refuses an MJD that is NaN,
-// infinite or below zero.
+// NewWhen constructs a time from a finite, nonnegative MJD.
 func NewWhen(mjd float64) (when When, err error) {
 	if !NotBelowNone(mjd) {
 		return when, fmt.Errorf(

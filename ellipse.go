@@ -5,15 +5,13 @@ import (
 	"math"
 )
 
-// Confidence is the probability that the true position lies inside an
-// error ellipse, as the catalogue stated it: 0.95 for a 95% ellipse. It
-// excludes both ends, because 0 and 1 mean nothing for a Gaussian.
+// Confidence is the catalogue’s probability of the true position lying inside
+// its ellipse, such as 0.95. It must be strictly between zero and one; neither
+// endpoint defines a finite, positive Gaussian error radius.
 type Confidence float64
 
-// PercentToConfidence converts a stated percentage to a Confidence, so
-// that a reader can pass the catalogue's "95" as the catalogue wrote it.
-// PercentToConfidence refuses a percentage that is not above 0 and
-// below 100.
+// PercentToConfidence converts a catalogue percentage, such as 95, to a
+// Confidence. Values outside the open interval (0, 100) return an error.
 func PercentToConfidence(percent float64) (confidence Confidence, err error) {
 	confidence = Confidence(percent / percentPerWhole)
 	if err = confidence.check(); err != nil {
@@ -25,7 +23,7 @@ func PercentToConfidence(percent float64) (confidence Confidence, err error) {
 // percentPerWhole is the number of percent in a whole, 100.
 const percentPerWhole = 100.0
 
-// check refuses a confidence that is not strictly between 0 and 1.
+// check rejects a confidence outside the open interval (0, 1).
 func (confidence Confidence) check() error {
 	level := float64(confidence)
 	if !Positive(level) || level >= whole {
@@ -89,9 +87,8 @@ func ToOneSigma(stated float64, confidence Confidence) (length float64,
 	return stated / factor, nil
 }
 
-// ErrorEllipse holds the error in a position, as one-sigma semi-axes. It
-// also keeps what the catalogue stated, so a reader of the record can see
-// what was converted and from what.
+// ErrorEllipse stores one-sigma positional semi-axes alongside the catalogue’s
+// original axes and confidence level, so the conversion can be checked.
 type ErrorEllipse struct {
 	semiMajor, semiMinor             float64
 	positionAngle                    float64
@@ -99,13 +96,11 @@ type ErrorEllipse struct {
 	statedSemiMajor, statedSemiMinor float64
 }
 
-// NewErrorEllipse takes the catalogue's semi-axes in arcseconds, stated
-// at the confidence given, and returns the ellipse at one sigma with the
-// stated values kept.
+// NewErrorEllipse converts catalogue semi-axes in arcseconds at the given
+// confidence to one sigma, retaining the stated values.
 //
-// NewErrorEllipse takes the position angle in degrees east of north,
-// from 0 up to but not including 360. Both axes must be finite and above
-// zero, and the major axis must not be shorter than the minor.
+// The position angle is in degrees east of north, in [0, 360). Axes must be
+// finite and positive, with the major axis at least as long as the minor.
 func NewErrorEllipse(major, minor, angle float64,
 	stated Confidence) (ellipse ErrorEllipse, err error) {
 	if !Positive(major) || !Positive(minor) {
@@ -158,8 +153,7 @@ func (ellipse ErrorEllipse) StatedSemiMinor() float64 {
 	return ellipse.statedSemiMinor
 }
 
-// valid says whether NewErrorEllipse made the ellipse. A zero
-// ErrorEllipse was not made by it.
+// valid reports whether NewErrorEllipse initialized the ellipse.
 func (ellipse ErrorEllipse) valid() bool {
 	return ellipse.statedAt.check() == nil
 }

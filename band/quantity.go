@@ -9,9 +9,8 @@ import (
 	"github.com/janearc/nilgai"
 )
 
-// Quantity is a value written with its unit, as a paper writes it, such
-// as "1 keV" or "21 cm". In data/profiles.json it is an object with a
-// "value" and a "unit".
+// Quantity pairs a value with a published unit, such as 1 keV or 21 cm. In
+// data/profiles.json it has keys "value" and "unit".
 type Quantity struct {
 	// Value is the number the paper gives.
 	Value float64 `json:"value"`
@@ -19,37 +18,27 @@ type Quantity struct {
 	Unit string `json:"unit"`
 }
 
-// prefixes are the si prefixes nilgai reads in front of a unit, by their
-// symbol, with u standing for micro. The functions are libtheme's. A unit
-// with no prefix is not in the map; it is used as it is.
+// prefixes maps supported SI prefix symbols to libtheme functions, using u for
+// micro. Units without a prefix use their base conversion directly.
 var prefixes = map[string]func(float64) float64{
 	"k": si.Kilo, "M": si.Mega, "G": si.Giga, "T": si.Tera, "P": si.Peta,
 	"c": si.Centi, "m": si.Milli, "u": si.Micro, "n": si.Nano,
 }
 
-// bases are the units a band's end is written in, and how one becomes a
-// wavelength in nm: a photon's energy in eV, a frequency in Hz, or a
-// wavelength in metres. The conversions are libtheme's.
+// bases maps eV, Hz, and m to libtheme’s wavelength conversions. Each
+// conversion returns nanometres.
 var bases = map[string]func(float64) float64{
 	"eV": radiation.FromEnergy,
 	"Hz": radiation.HertzToNm,
 	"m":  radiation.MetresToNm,
 }
 
-// Nanometres is the quantity brought to a wavelength in nm: an energy in
-// eV, a frequency in Hz or a length in m, each with an si prefix or none.
+// Nanometres converts a photon energy in eV, frequency in Hz, or length in m to
+// wavelength. Supported prefixes are k, M, G, T, P, c, m, u, and n; unprefixed
+// units are also accepted.
 //
-// Nanometres reads these prefixes, and refuses any other:
-//
-//   - k, M, G, T and P: kilo to peta
-//   - c: centi
-//   - m: milli
-//   - u: micro
-//   - n: nano
-//
-// Nanometres refuses a value that is not finite and above zero, and a
-// wavelength that comes out not finite and above zero. On a refusal it
-// returns zero with the error.
+// The input and resulting wavelength must be finite and positive. Unknown units
+// or invalid values return zero and an error.
 func (quantity Quantity) Nanometres() (float64, error) {
 	if !nilgai.Positive(quantity.Value) {
 		return none, fmt.Errorf("%v %s must be finite and above zero",

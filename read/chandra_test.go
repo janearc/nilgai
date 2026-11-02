@@ -68,9 +68,8 @@ const arcsecondsPerDegree = 3600
 // radians.
 const degreesInHalfACircle = 180
 
-// separation returns the angle between two positions in arcseconds,
-// treating the sky as flat. That is accurate enough for the few
-// arcseconds that a pin is about.
+// separation estimates angular distance in arcseconds on a local flat sky. This
+// is sufficient for the fixture’s small positional offsets.
 func separation(ra, dec, otherRA, otherDec float64) float64 {
 	radians := dec * math.Pi / degreesInHalfACircle
 	across := (ra - otherRA) * math.Cos(radians)
@@ -126,13 +125,10 @@ func TestChandraReadsTheRealSearch(test *testing.T) {
 	}
 }
 
-// TestChandraPinsSgrA is the pin. It checks that Chandra's Sgr A* sits
-// within the fixture's bound of the radio position of Sgr A*, which is a
-// fraction of one sigma.
-//
-// TestChandraPinsSgrA checks the sigma as well, so that a pass for the
-// wrong reason shows. Sigma must match the fixture's hand-worked value for
-// the stated 95% radius.
+// The Chandra position must agree with Sgr A*’s radio position within the
+// fixture’s fractional-sigma bound. Sigma must also match the independently
+// calculated 95%-to-one-sigma conversion, so an inflated ellipse cannot hide a
+// bad position.
 func TestChandraPinsSgrA(test *testing.T) {
 	read := loadSgrA(test)
 	for _, source := range chandraSources(test, realSearch(test, read)) {
@@ -170,9 +166,9 @@ func pinned(test *testing.T, read sgraFixture, source nilgai.Source) {
 			stated, read.Chandra.Sigma, read.Chandra.Stated)
 	}
 	flux := source.Measurements()[none]
-	value, isEnergy := ergs(flux.Value())
-	if !isEnergy || !near(value, read.Chandra.Flux, sameTo(test)) ||
-		flux.Filter() != read.Chandra.Filter {
+	if Num(flux.Value().Value()) != read.Chandra.Flux ||
+		flux.Filter() != read.Chandra.Filter ||
+		flux.Value().Unit() != nilgai.ErgPerSecPerCm2 {
 		test.Errorf("Sgr A*'s flux reads as %+v", flux)
 	}
 }
@@ -186,8 +182,8 @@ func TestChandraFluxErrorIsHalfTheLimitsWidth(test *testing.T) {
 		test.Fatalf("%d sources from the good row", len(got))
 	}
 	flux := got[none].Measurements()[none]
-	sigma, isEnergy := ergs(flux.Error())
-	if !isEnergy || !near(sigma, halfTheLimitsWidth, sameTo(test)) {
+	sigma := flux.Error().Value()
+	if !near(Num(sigma), halfTheLimitsWidth, sameTo(test)) {
 		test.Errorf("flux error %v, want %v", sigma, halfTheLimitsWidth)
 	}
 }
@@ -286,12 +282,9 @@ func ellipseOf(test *testing.T, r0, r1, angle Num) nilgai.ErrorEllipse {
 	return got[none].Error()
 }
 
-// TestChandraTurnsTheAngleWithTheAxes checks that the larger radius is the
-// major axis, and that when the swap puts the major axis a quarter turn
-// from where r0 pointed, the angle turns with it.
-//
-// TestChandraTurnsTheAngleWithTheAxes uses angles worked by hand: 30 and
-// a quarter turn is 120; 300 and a quarter turn is 390, which is 30.
+// Reordering axes must rotate the major-axis angle a quarter-turn, including
+// wraparound. Hand-calculated cases include 30 + 90 = 120 and 300 + 90 = 30
+// modulo 360.
 func TestChandraTurnsTheAngleWithTheAxes(test *testing.T) {
 	for _, each := range loadSgrA(test).Ellipses {
 		ellipse := ellipseOf(test, each.R0, each.R1, each.Angle)
@@ -324,10 +317,9 @@ func TestChandraDoesNotTurnWhatItDidNotSwap(test *testing.T) {
 	}
 }
 
-// TestChandraOffsetSeesCosDec is an anti-test. The offset pin can see
-// what the physical bound cannot. The same row measured on a flat sky,
-// with no cos(dec), is outside the offset pin and inside the bound, so
-// the pin is not too loose to tell the two apart.
+// The positional check must detect omission of cos(dec). The incorrect flat-sky
+// offset is inside the broader physical bound but outside the tighter fixture
+// bound.
 func TestChandraOffsetSeesCosDec(test *testing.T) {
 	read := loadSgrA(test)
 	source := chandraSources(test, realSearch(test, read))

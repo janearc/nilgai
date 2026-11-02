@@ -14,14 +14,11 @@ import (
 //go:embed testdata/*.json
 var fixtures embed.FS
 
-// none is the count of nothing, zero.
+// none is the zero count.
 const none = 0
 
 // positive is the sign that math.Inf takes to return +Inf.
 const positive = +1
-
-// unit is one of a unit, the amount a conversion is defined by.
-const unit = 1
 
 // Num is a number in a fixture. JSON has no NaN or infinity, so a fixture
 // writes them as the strings "NaN", "Inf" and "-Inf".
@@ -59,7 +56,7 @@ func (num *Num) special(text string) error {
 	return nil
 }
 
-// load reads testdata/name.json into into.
+// load reads testdata/name.json into the destination.
 func load(test *testing.T, name string, into any) {
 	test.Helper()
 	data, err := fixtures.ReadFile("testdata/" + name + ".json")
@@ -106,48 +103,15 @@ type fluxSpec struct {
 	Value Num
 }
 
-// refusals tries the flux where NewDetection and NewUpperLimit take one,
-// beside a good flux of its kind from the world, and says which refused
-// it. The fixture names the kind as "Jy" or "erg".
-func (spec fluxSpec) refusals(test *testing.T, read world,
-	through filter) refused {
-	test.Helper()
-	bad := float64(spec.Value)
+// flux returns the flux in the unit the fixture names: Jy, erg, or nil.
+func (spec fluxSpec) flux() nilgai.Flux {
 	switch spec.Unit {
 	case "Jy":
-		good := float64(read.Density.Value)
-		return refusalsOf(through, nilgai.Jansky(bad), nilgai.Jansky(good))
+		return nilgai.FluxDensity(spec.Value)
 	case "erg":
-		good := float64(read.Energy.Value)
-		return refusalsOf(through, nilgai.ErgPerSecPerCm2(bad),
-			nilgai.ErgPerSecPerCm2(good))
+		return nilgai.EnergyFlux(spec.Value)
 	}
-	test.Fatalf("%s: unit %q is not Jy or erg", spec.Name, spec.Unit)
-	return refused{}
-}
-
-// refused says where a bad flux was refused: as a detection's value, as
-// its error, and as an upper limit.
-type refused struct{ value, err, limit bool }
-
-// eitherFlux is a FluxDensity or an EnergyFlux as a type parameter, as
-// NewDetection and NewUpperLimit take one.
-type eitherFlux interface {
-	nilgai.FluxDensity | nilgai.EnergyFlux
-	nilgai.Flux
-}
-
-// refusalsOf tries bad as a detection's value and error beside good, and
-// as an upper limit. A refusal counts only when it gives no measurement.
-func refusalsOf[Of eitherFlux](through filter, bad, good Of) refused {
-	value, asValue := nilgai.NewDetection(through.name, through.first,
-		through.last, bad, good)
-	sigma, asError := nilgai.NewDetection(through.name, through.first,
-		through.last, good, bad)
-	limit, asLimit := nilgai.NewUpperLimit(through.name, through.first,
-		through.last, bad)
-	return refused{value == nil && asValue != nil,
-		sigma == nil && asError != nil, limit == nil && asLimit != nil}
+	return nil
 }
 
 // world holds testdata/world.json.
@@ -174,7 +138,6 @@ type world struct {
 	WhenRefused    []Num
 	InvalidNumbers []int
 	BadFluxes      []fluxSpec
-	InSI           struct{ Jansky, ErgPerSecPerCm2, Rel Num }
 }
 
 // loadWorld reads the world fixture.
@@ -215,13 +178,13 @@ func (read world) density(
 	through filter,
 ) nilgai.Measurement {
 	test.Helper()
-	value, sigma := float64(read.Density.Value), float64(read.Density.Error)
 	measurement, err := nilgai.NewDetection(through.name, through.first,
-		through.last, nilgai.Jansky(value), nilgai.Jansky(sigma))
+		through.last, nilgai.FluxDensity(read.Density.Value),
+		nilgai.FluxDensity(read.Density.Error))
 	if err != nil {
 		test.Fatal(err)
 	}
-	return *measurement
+	return measurement
 }
 
 // look returns a flux-density detection through the filter at the MJD

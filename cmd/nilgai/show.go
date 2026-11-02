@@ -36,10 +36,9 @@ func (shown shower) show(call pzm.Call) error {
 	return show(call, shown.profiles, shown.searches)
 }
 
-// show draws the searches the call names as a png on standard output.
-// Rows that cannot be read are returned together, after the picture is
-// written. The picture then shows what could be read, and the call still
-// says what could not.
+// show writes the selected searches as a PNG to standard output. Row errors are
+// collected and returned together after writing the image, so valid sources
+// remain visible while invalid rows are still reported.
 func show(call pzm.Call, source band.ProfileSource,
 	searches []search) error {
 	wanted, err := askedFor(call)
@@ -80,8 +79,9 @@ type reader interface {
 	Read(name string, in io.Reader) iter.Seq2[*nilgai.Source, error]
 }
 
-// asReader is the table as a reader, or a nil reader and the error. It
-// is here because a nil *Chandra put in a reader is not a nil reader.
+// asReader converts a constructed table to the reader interface only after
+// checking its error. A typed nil pointer inside an interface would not compare
+// equal to nil.
 func asReader[Table reader](table Table, err error) (reader, error) {
 	if err != nil {
 		return nil, err
@@ -89,8 +89,7 @@ func asReader[Table reader](table Table, err error) (reader, error) {
 	return table, nil
 }
 
-// search pairs a flag that show reads a catalogue from with a function
-// that makes the reader for what the flag names.
+// search pairs an input flag with the constructor for its catalogue reader.
 type search struct {
 	flag  string
 	build func([]radiation.Profile) (reader, error)
@@ -176,17 +175,15 @@ func readFile(table reader, path string) (sources []nilgai.Source,
 	return sources, unread, nil
 }
 
-// asked holds what a show call asked to see:
-//   - a centre
-//   - the width of each panel in arcseconds
-//   - how many pixels across each panel is
+// asked holds the requested centre, panel widths in arcseconds, and the pixel
+// width of each panel.
 type asked struct {
 	centre nilgai.Position
 	widths []float64
 	pixels int
 }
 
-// askedFor reads the show call's flags. It needs every one of them.
+// askedFor parses the required centre, width, and pixel flags.
 func askedFor(call pzm.Call) (wanted asked, err error) {
 	ra, err := number(call, "ra")
 	if err != nil {
@@ -217,8 +214,8 @@ func askedFor(call pzm.Call) (wanted asked, err error) {
 	return wanted, err
 }
 
-// number returns the flag's value as a number. It refuses a flag that is
-// not given, or is not a number, and the error names the flag.
+// number parses a required numeric flag. Missing or invalid values return an
+// error identifying the flag.
 func number(call pzm.Call, name string) (value float64, err error) {
 	if !call.Given(name) {
 		return value, fmt.Errorf("show needs --%s", name)

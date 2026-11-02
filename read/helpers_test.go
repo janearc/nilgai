@@ -13,10 +13,10 @@ import (
 //go:embed testdata/*.json testdata/*.tsv testdata/*.csv testdata/*.fit
 var fixtures embed.FS
 
-// none is the count of nothing, zero.
+// none is the zero count.
 const none = 0
 
-// halves is the number of equal parts in a whole that a half is one of.
+// halves is the divisor for two equal parts.
 const halves = 2
 
 // positive is the sign that math.Inf takes to return +Inf.
@@ -74,7 +74,7 @@ func (num *Num) special(text string) error {
 	return nil
 }
 
-// load reads testdata/name.json into into.
+// load reads testdata/name.json into the destination.
 func load(test *testing.T, name string, into any) {
 	test.Helper()
 	data, err := fixtures.ReadFile("testdata/" + name + ".json")

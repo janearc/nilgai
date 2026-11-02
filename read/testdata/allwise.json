@@ -41,7 +41,7 @@
     {"name": "w1mpro infinite on a detection", "row": "J1,266.4,-29.0,0.2,0.2,0,Inf,0.1,0000,AAAA", "column": "w1mpro"},
     {"name": "w1mpro infinite on a limit", "row": "J1,266.4,-29.0,0.2,0.2,0,Inf,,0000,AAAA", "column": "w1mpro"},
     {"name": "a flux that overflows", "row": "J1,266.4,-29.0,0.2,0.2,0,-10000,0.1,0000,AAAA", "column": "w1mpro"},
-    {"name": "an error that overflows the flux error: magnitude -60 is about 3 W/m^2/Hz, so 1e308 magnitudes of error is past the largest float", "row": "J1,266.4,-29.0,0.2,0.2,0,-60,1e308,0000,AAAA", "column": "w1mpro"},
+    {"name": "an error that overflows the flux error", "row": "J1,266.4,-29.0,0.2,0.2,0,0,1e308,0000,AAAA", "column": "w1mpro"},
     {"name": "no designation", "row": ",266.4,-29.0,0.2,0.2,0,15,0.1,0000,AAAA", "column": ""}
   ],
   "badTables": [

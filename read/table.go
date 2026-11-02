@@ -16,9 +16,8 @@ import (
 // from 1 and does not count the header.
 const firstDataRow = 1
 
-// anyCount is the value of csv.Reader's FieldsPerRecord that holds no row
-// to its header's length. A short row is then read, and its missing cells
-// are refused by name, instead of ending the table.
+// anyCount disables csv.Reader’s fixed field count. Short rows can then produce
+// errors naming the missing columns instead of ending the table.
 const anyCount = -1
 
 // tsv reads tab-separated rows and passes over # lines, as the CSC's TAP
@@ -62,9 +61,8 @@ func noColumn(column string) error {
 	return fmt.Errorf("the table has no column %s", column)
 }
 
-// cellsOf returns a row's cells by column name. A row shorter than its
-// header has no cells for the missing columns, which are then refused by
-// name.
+// cellsOf maps row cells to header names. Short rows omit missing columns,
+// allowing later validation to identify them by name.
 func cellsOf(fields []string, at map[string]int) map[string]string {
 	cells := map[string]string{}
 	for column, place := range at {
@@ -75,9 +73,8 @@ func cellsOf(fields []string, at map[string]int) map[string]string {
 	return cells
 }
 
-// numbers reads the named cells as numbers, or returns the column that
-// could not be read and why. An empty cell is refused as empty, because
-// the catalogue has no value there and nilgai does not make one up.
+// numbers parses named cells as numbers, returning the first invalid column and
+// its error. Empty cells are errors rather than implicit zeros.
 func numbers(cells map[string]string,
 	columns ...string) (map[string]float64, string, error) {
 	values := map[string]float64{}
@@ -95,9 +92,9 @@ func numbers(cells map[string]string,
 	return values, "", nil
 }
 
-// profileBands returns the first and last libtheme band of the named
-// profile. A reader's band edges are then written once, in
-// band/data/profiles.json beside its colour.
+// profileBands looks up a profile’s first and last libtheme bands. The profile
+// keeps the reader’s band edges in band/data/profiles.json beside its colour
+// mapping.
 func profileBands(profiles []radiation.Profile,
 	name string) (first, last bands.Band, err error) {
 	for _, each := range profiles {

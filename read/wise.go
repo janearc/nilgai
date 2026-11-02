@@ -32,12 +32,13 @@ const (
 //go:embed data/wise-zero-points.json
 var zeroPointData []byte
 
-// WiseZeroPoints holds the flux densities of magnitude zero in W1 to W4.
+// WiseZeroPoints holds the flux densities of magnitude zero in W1 to W4,
+// in Jy.
 type WiseZeroPoints struct{ w1, w2, w3, w4 nilgai.FluxDensity }
 
-// ReadWiseZeroPoints reads zero points in Jy from JSON shaped like
-// data/wise-zero-points.json, with keys "W1" to "W4". Each must be above
-// zero. A missing key reads as zero and is refused.
+// ReadWiseZeroPoints decodes JSON with keys W1 to W4, as in
+// data/wise-zero-points.json. Every zero point must be positive; missing keys
+// default to zero and fail validation.
 func ReadWiseZeroPoints(data []byte) (points WiseZeroPoints, err error) {
 	var read struct{ W1, W2, W3, W4 float64 }
 	if err = json.Unmarshal(data, &read); err != nil {
@@ -51,15 +52,14 @@ func ReadWiseZeroPoints(data []byte) (points WiseZeroPoints, err error) {
 		}
 	}
 	return WiseZeroPoints{
-		w1: nilgai.Jansky(read.W1),
-		w2: nilgai.Jansky(read.W2),
-		w3: nilgai.Jansky(read.W3),
-		w4: nilgai.Jansky(read.W4),
+		w1: nilgai.FluxDensity(read.W1),
+		w2: nilgai.FluxDensity(read.W2),
+		w3: nilgai.FluxDensity(read.W3),
+		w4: nilgai.FluxDensity(read.W4),
 	}, nil
 }
 
-// For returns the zero point of the band. It refuses any band but W1 to
-// W4.
+// For returns the zero point for W1 to W4. Unknown bands return an error.
 func (points WiseZeroPoints) For(band WiseBand) (zero nilgai.FluxDensity,
 	err error) {
 	switch band {
@@ -76,10 +76,9 @@ func (points WiseZeroPoints) For(band WiseBand) (zero nilgai.FluxDensity,
 		int(band))
 }
 
-// ZeroPoint returns the flux density of magnitude zero in the band.
-// ZeroPoint's values come from data/wise-zero-points.json, which takes
-// them from the WISE All-Sky Release Explanatory Supplement, section
-// IV.4.h, Table 1. ZeroPoint refuses any band but W1 to W4.
+// ZeroPoint returns the band’s zero-magnitude flux density in Jy. Values come
+// from data/wise-zero-points.json, citing the WISE All-Sky Release Explanatory
+// Supplement, section IV.4.h, Table 1. Bands outside W1 to W4 return an error.
 func (band WiseBand) ZeroPoint() (zero nilgai.FluxDensity, err error) {
 	points, readErr := ReadWiseZeroPoints(zeroPointData)
 	zero, err = points.For(band)
@@ -95,7 +94,7 @@ const pogson = 2.5
 const tenth = 10.0
 
 // WiseFlux converts a WISE Vega magnitude and its error to a flux
-// density and its error.
+// density and its error, both in Jy.
 //
 // WiseFlux computes F = F0 * 10^(-m / 2.5), where F0 is the band's zero
 // point (Jarrett et al. 2011, ApJ 735, 112, as the Explanatory Supplement

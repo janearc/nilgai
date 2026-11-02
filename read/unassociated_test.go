@@ -68,9 +68,7 @@ func TestUnassociatedOverTheRealRows(test *testing.T) {
 	}
 }
 
-// TestUnassociatedKeepsTheErrors checks that rows a reader refuses come
-// through Unassociated as the errors they are, in their place, and are
-// not dropped.
+// Filtering must preserve row errors in sequence order.
 func TestUnassociatedKeepsTheErrors(test *testing.T) {
 	account, file := loadRealFermi(test)
 	limit := account.Unassociated.Limits[none]
@@ -98,9 +96,8 @@ func (given *handed) each(yield func(*nilgai.Source, error) bool) {
 	}
 }
 
-// TestUnassociatedStopsWhenTold checks that when a caller stops reading,
-// Unassociated stops too. It asks for nothing after the yield that says
-// no, whether that yield was an error or a source.
+// Stopping at either a source or an error must stop the upstream iterator
+// immediately.
 func TestUnassociatedStopsWhenTold(test *testing.T) {
 	account, file := loadRealFermi(test)
 	limit := account.Unassociated.Limits[one]
@@ -136,8 +133,8 @@ func blankFermi(test *testing.T, account realFermi,
 	if err != nil {
 		test.Fatal(err)
 	}
-	energy := nilgai.ErgPerSecPerCm2(float64(fake.Flux))
-	flux, err := nilgai.NewDetection("f", first, last, energy, energy)
+	flux, err := nilgai.NewDetection("f", first, last,
+		nilgai.EnergyFlux(fake.Flux), nilgai.EnergyFlux(fake.Flux))
 	if err != nil {
 		test.Fatal(err)
 	}
@@ -146,10 +143,11 @@ func blankFermi(test *testing.T, account realFermi,
 		if err != nil {
 			test.Fatal(err)
 		}
-		flux, err = flux.WithReading(nilgai.Good, []nilgai.Flag{flag})
+		reading, err := flux.WithReading(nilgai.Good, []nilgai.Flag{flag})
 		if err != nil {
 			test.Fatal(err)
 		}
+		flux = *reading
 	}
 	position, err := nilgai.NewPosition(float64(fake.RA), float64(fake.Dec))
 	if err != nil {
@@ -162,17 +160,15 @@ func blankFermi(test *testing.T, account realFermi,
 	}
 	var epoch nilgai.When
 	source, err := nilgai.NewSource(catalogue, "x", position, ellipse,
-		epoch, []nilgai.Measurement{*flux})
+		epoch, []nilgai.Measurement{flux})
 	if err != nil {
 		test.Fatal(err)
 	}
 	return *source
 }
 
-// TestUnassociatedOnlyForFermiWithAClass checks that Unassociated selects
-// only what it can see to be unassociated in 4FGL. A blank CLASS1 flag on
-// a source of another catalogue is not 4FGL's blank, and a Fermi source
-// with no CLASS1 flag at all has not said it is unassociated.
+// Only Fermi sources with an explicit blank CLASS1 qualify. Another catalogue’s
+// blank flag or a Fermi source with no CLASS1 is insufficient.
 func TestUnassociatedOnlyForFermiWithAClass(test *testing.T) {
 	account, _ := loadRealFermi(test)
 	limit := account.Unassociated.Limits[one]

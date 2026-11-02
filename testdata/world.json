@@ -21,12 +21,7 @@
     {"name": "negative value", "unit": "Jy", "value": -1},
     {"name": "negative energy", "unit": "erg", "value": -1e-9},
     {"name": "NaN value", "unit": "Jy", "value": "NaN"},
-    {"name": "Inf value", "unit": "erg", "value": "Inf"}
-  ],
-  "inSI": {
-    "source": "defined, not invented: the IAU defines the jansky as 1e-26 W/m^2/Hz, and the cgs erg is 1e-7 J, so 1 erg/s/cm^2 is 1e-3 W/m^2. rel is a part in a trillion, room for the rounding of a few float64 multiplications and nothing more",
-    "jansky": 1e-26,
-    "ergPerSecPerCm2": 1e-3,
-    "rel": 1e-12
-  }
+    {"name": "Inf value", "unit": "erg", "value": "Inf"},
+    {"name": "nil value", "unit": "nil", "value": 0}
+  ]
 }

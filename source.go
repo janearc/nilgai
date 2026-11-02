@@ -9,9 +9,9 @@ import (
 // Catalogue names one of the inputs.
 type Catalogue string
 
-// Catalogue's values are the catalogues nilgai reads. AllWISE is WISE's
-// catalogue of sources, one row for each; Neowise is WISE's catalogue of
-// single looks, which nilgai reads as light curves.
+// Catalogue’s values identify the supported record formats. AllWISE has one row
+// per source; Neowise single exposures can be grouped into light curves. Reader
+// implementations are listed in package read.
 const (
 	MeerKAT Catalogue = "MeerKAT"
 	Fermi   Catalogue = "Fermi-4FGL"
@@ -20,7 +20,7 @@ const (
 	AllWISE Catalogue = "AllWISE"
 )
 
-// valid says whether nilgai reads the catalogue.
+// valid reports whether the catalogue has a defined record format.
 func (catalogue Catalogue) valid() bool {
 	switch catalogue {
 	case MeerKAT, Fermi, Chandra, NEOWISE, AllWISE:
@@ -29,8 +29,8 @@ func (catalogue Catalogue) valid() bool {
 	return false
 }
 
-// Source is one catalogue row in the common record. Make one with
-// NewSource. A Source that exists has passed NewSource's checks.
+// Source holds one catalogue row in the common format. NewSource validates the
+// identifier, error ellipse, and measurements before constructing it.
 type Source struct {
 	catalogue    Catalogue
 	id           string
@@ -40,17 +40,12 @@ type Source struct {
 	measurements []Measurement
 }
 
-// NewSource returns a Source. It refuses:
-//   - a catalogue nilgai does not read
-//   - an empty identifier
-//   - an ellipse that did not come from NewErrorEllipse
-//   - no measurements
-//   - a measurement that no constructor made
+// NewSource constructs a catalogue record. It returns nil and an error for an
+// unknown catalogue, empty identifier, invalid ellipse, no measurements, or a
+// measurement not initialized by its constructor.
 //
-// id is the catalogue's own identifier, verbatim. The position error is
-// at one sigma. The epoch is the position's, when the catalogue gives
-// one, and the zero When when it does not. On a refusal the Source is
-// nil.
+// The identifier is preserved verbatim. The ellipse is at one sigma, and epoch
+// is the position’s epoch when known; a zero When means unknown.
 func NewSource(catalogue Catalogue, id string, position Position,
 	ellipse ErrorEllipse, epoch When,
 	measurements []Measurement) (*Source, error) {

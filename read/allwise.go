@@ -77,17 +77,16 @@ var allwiseFlags = []string{"cc_flags", "ph_qual"}
 // artefact affecting that band's photometry.
 const cleanContamination = '0'
 
-// NewAllWISE returns an AllWISE whose fluxes carry the libtheme bands of
-// their own band's filter, W1 to W4, from band/data/filters.json, or nil
-// on a refusal. A flux never carries another band's filter.
+// NewAllWISE constructs a reader using the W1 to W4 filter edges in
+// band/data/filters.json. Each flux uses its own filter’s libtheme bands.
+// Invalid filter data returns nil and an error.
 func NewAllWISE() (*AllWISE, error) {
 	return allwiseOver(band.FilterBands)
 }
 
-// ReadAllWISE does what NewAllWISE does, with the filters given as JSON
-// shaped like band/data/filters.json. ReadAllWISE refuses filters that
-// band.ReadFilterBands refuses, and filters that lack any of W1 to W4,
-// and returns nil on a refusal.
+// ReadAllWISE constructs a reader with filter JSON in band/data/filters.json’s
+// format. Invalid filters or a missing W1, W2, W3, or W4 return nil and an
+// error from band.ReadFilterBands.
 func ReadAllWISE(filters []byte) (*AllWISE, error) {
 	return allwiseOver(filtersJSON(filters).edges)
 }
@@ -117,26 +116,20 @@ func allwiseOver(edges func(name string) (bands.Band, bands.Band,
 	return table, nil
 }
 
-// Read yields a *Source for each row of the search, or nil and a
-// *RowError for a row it cannot read. A search without the columns it
-// needs, or input that is not a table at all, is yielded once as nil and
-// an error, and ends the read.
+// Read yields a Source per valid search row or nil and a RowError naming an
+// invalid row. Missing required columns or an unreadable table yield one
+// input-level error and end the sequence.
 //
-// Read refuses a row, naming the column, when:
-//   - a number cell is empty or not a number
-//   - ra or dec is outside the sky
-//   - sigra or sigdec is negative, NaN or infinite
-//   - the errors give no ellipse
-//   - w1sigmpro is negative, NaN or infinite
+// Row errors identify empty or nonnumeric required cells, invalid sky
+// coordinates, negative or nonfinite position errors, degenerate ellipses, and
+// negative or nonfinite magnitude uncertainties.
 //
-// Read also takes the magnitude and error of W2, W3 and W4 when a search
-// selects them (w2mpro and w2sigmpro, and so on), both columns of a band
-// or neither. Each source then has a measurement in each band selected,
-// W1 to W4 in order.
+// W1 is required. W2 to W4 are read when both magnitude and uncertainty columns
+// are selected; selecting only one is an input-level error. Measurements follow
+// W1 to W4 order.
 //
-// Read refuses the other bands in the same way as W1, naming the column,
-// with one exception. A band whose magnitude and error are both empty is
-// left out, because AllWISE has no measurement in that band.
+// In optional bands, a row with both cells empty has no measurement and is
+// skipped. Other invalid values produce row errors, as they do for W1.
 func (table AllWISE) Read(name string,
 	in io.Reader) iter.Seq2[*nilgai.Source, error] {
 	reading := allwiseReading{table: table, name: name, in: in}
@@ -183,10 +176,9 @@ func (reading allwiseReading) each(yield func(*nilgai.Source, error) bool) {
 	}
 }
 
-// bothColumnsOfEachBand returns an error for a search that selects only
-// one of a band's two columns, the magnitude or its error. The error
-// names the missing column. A search that selects neither has not asked
-// for the band, and only W1 is required.
+// bothColumnsOfEachBand requires both magnitude and uncertainty columns for
+// every selected band and names a missing column in its error. Bands with
+// neither column are unselected; only W1 is required.
 func bothColumnsOfEachBand(at map[string]int) error {
 	for _, each := range allwiseBands {
 		if each.band == W1 {
@@ -204,9 +196,9 @@ func bothColumnsOfEachBand(at map[string]int) error {
 	return nil
 }
 
-// source converts one row to a Source, or returns nil, the column that
-// could not be read, and why. When the nilgai record refuses the Source,
-// the error names no column.
+// source converts one row into the common record. On failure it returns nil,
+// the affected column, and the error. Record-level validation errors have no
+// column name.
 func (table AllWISE) source(
 	cells map[string]string,
 ) (*nilgai.Source, string, error) {
@@ -239,19 +231,14 @@ func (table AllWISE) source(
 	return source, "", err
 }
 
-// measurements returns the row's brightness in each band, W1 first, with
-// WISE's flags kept and read. If a column cannot be read it returns that
-// column and why.
+// measurements builds the row’s flux measurements in W1 to W4 order, preserving
+// WISE flags and their interpretation. Parsing errors identify the affected
+// column.
 //
-// W1 is always there. Another band is there when the search selected it
-// and the row has a value in it.
-//
-// AllWISE leaves both a band's magnitude and its error empty when no
-// profile-fit measurement was possible there. Its ph_qual is then X (AllWISE
-// Explanatory Supplement, section II.1.a). A source with no measurement in
-// the band is not a bad row, so the band is left out.
-//
-// measurements refuses a band with an error and no magnitude as a bad row.
+// W1 is required; optional bands appear only when selected and populated.
+// AllWISE leaves both cells empty when profile-fit photometry was not possible,
+// with ph_qual X (AllWISE Explanatory Supplement, II.1.a). Such bands are
+// omitted; an uncertainty without a magnitude is a row error.
 func (table AllWISE) measurements(cells map[string]string) (
 	made []nilgai.Measurement, column string, err error) {
 	var unkept error
@@ -268,7 +255,7 @@ func (table AllWISE) measurements(cells map[string]string) (
 		if err != nil {
 			return nil, column, err
 		}
-		read, failed := flagged(*got, cells, place)
+		read, failed := flagged(got, cells, place)
 		made = append(made, read...)
 		unkept = errors.Join(unkept, failed)
 	}
@@ -310,41 +297,41 @@ func absent(cells map[string]string, each allwiseBand) bool {
 // upper limit when the error is empty, which is how AllWISE writes a
 // limit.
 //
-// If a cell cannot be read, brightness returns nil and names which of the
-// two columns it was.
+// If a cell cannot be read, brightness names which of the two columns it
+// was.
 func (table AllWISE) brightness(place int, magnitude float64,
-	magnitudeError string) (*nilgai.Measurement, string, error) {
+	magnitudeError string) (measurement nilgai.Measurement, column string,
+	err error) {
 	each, edges := allwiseBands[place], table.edges[place]
 	if magnitudeError == "" {
 		limit, _, err := WiseFlux(each.band, magnitude, none)
 		if err != nil {
-			return nil, each.magnitude, err
+			return measurement, each.magnitude, err
 		}
-		measurement, err := nilgai.NewUpperLimit(each.filter,
+		measurement, err = nilgai.NewUpperLimit(each.filter,
 			edges.first, edges.last, limit)
 		return measurement, each.magnitude, err
 	}
 	spread, err := strconv.ParseFloat(magnitudeError, 64)
 	if err != nil {
-		return nil, each.sigma, err
+		return measurement, each.sigma, err
 	}
 	if !nilgai.NotBelowNone(spread) {
-		return nil, each.sigma, fmt.Errorf("magnitude error "+
+		return measurement, each.sigma, fmt.Errorf("magnitude error "+
 			"%v must be finite and not below zero", spread)
 	}
 	flux, sigma, err := WiseFlux(each.band, magnitude, spread)
 	if err != nil {
-		return nil, each.magnitude, err
+		return measurement, each.magnitude, err
 	}
-	measurement, err := nilgai.NewDetection(each.filter, edges.first,
+	measurement, err = nilgai.NewDetection(each.filter, edges.first,
 		edges.last, flux, sigma)
 	return measurement, each.magnitude, err
 }
 
-// flagged returns the measurement with WISE's flags kept and read. The
-// quality is doubtful when the band's character of cc_flags names an
-// artefact, and good when it does not. The flags are kept whole, for every
-// band.
+// flagged preserves the complete WISE flag strings on the measurement. A
+// contamination flag for this band makes quality Doubtful; otherwise it is
+// Good. Other bands’ flag characters remain available to callers.
 func flagged(measurement nilgai.Measurement, cells map[string]string,
 	place int) ([]nilgai.Measurement, error) {
 	var flags []cell

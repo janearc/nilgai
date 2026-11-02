@@ -1,11 +1,10 @@
-// Package sky draws the sources that the readers return. It draws a square
-// of sky around a centre, with each source as its one-sigma error ellipse
-// in an ink for its instrument. Strip puts several skies side by side.
+// Package sky draws catalogue sources around a sky position. Each source
+// appears as its one-sigma error ellipse in an instrument-specific colour.
+// Strip arranges panels side by side.
 //
-// data/sky.json sets how the sky is drawn:
-//   - the ground colour
-//   - the colour the mark starts from
-//   - the widths of the lines, dots and gaps
+// data/sky.json defines the background, reference-mark colour, line widths, dot
+// sizes, and panel gaps. Colours are adjusted to the reader’s contrast
+// requirements through libreadme.
 package sky
 
 import (
@@ -62,17 +61,12 @@ func readStyle(data []byte) (*skyStyle, error) {
 		pixelsMax: read.PixelsMax}, nil
 }
 
-// Sky draws a square of sky around a centre. It draws:
-//   - each source as its one-sigma error ellipse in its instrument's ink,
-//     with a dot at its position
-//   - a cross at the mark, a place known from elsewhere
+// Sky renders a square field with a dot and one-sigma ellipse per source, and a
+// cross at a reference position. Construct it with NewSky.
 //
-// Make one with NewSky. The mark's contrast against the ground sits in the
-// reader's prose band, so the mark reads first.
-//
-// Each instrument's ink has its own contrast against the ground in
-// data/sky.json. That contrast may not fall under the reader's floor for
-// marks that are scanned and not read.
+// The reference mark uses the reader’s prose contrast band. Each instrument has
+// a target contrast in data/sky.json, which must meet the reader’s minimum for
+// scanned marks.
 type Sky struct {
 	centre  nilgai.Position
 	scale   float64
@@ -98,29 +92,24 @@ var profileFor = []inked{{nilgai.Fermi, "fermi"},
 	{nilgai.Chandra, "chandra"}, {nilgai.NEOWISE, "neowise"},
 	{nilgai.AllWISE, "neowise"}, {nilgai.MeerKAT, "meerkat"}}
 
-// NewSky returns a sky width arcseconds across and pixels wide, centred on
-// the position given, or nil on a refusal. Its inks take their hues from
-// the profiles given and their contrast from the reader's libreadme
-// profile, in the style that data/sky.json sets.
+// NewSky constructs a square field width arcseconds across and pixels wide,
+// centred on the given position. Hues come from the supplied profiles; target
+// contrasts come from data/sky.json and must satisfy the reader’s libreadme
+// profile.
 //
-// NewSky refuses:
-//   - a width or a pixel count that is not above zero
-//   - more pixels than the style's pixelsMax allows
-//   - an instrument with no contrast in the style
-//   - an instrument whose contrast is under the reader's floor
-//   - an ink that libreadme cannot bring to its contrast, because a
-//     picture that cannot be read is not drawn
+// It returns nil and an error for nonpositive dimensions, a pixel count above
+// pixelsMax, missing or insufficient instrument contrast, or colours that
+// cannot meet the requested contrast.
 //
-// NewSky gives no ink to a catalogue whose profile is not among those
-// given, and leaves that catalogue's sources out.
+// Catalogues without a supplied colour profile are omitted from the drawing.
 func NewSky(centre nilgai.Position, width float64, pixels int,
 	profiles []radiation.Profile, reader profile.Profile) (*Sky, error) {
 	return ReadSky(skyData, centre, width, pixels, profiles, reader)
 }
 
-// ReadSky does what NewSky does, in a style given as JSON shaped like
-// data/sky.json. ReadSky also refuses a style it cannot read, and a style
-// with a colour it cannot parse, and returns nil on a refusal.
+// ReadSky constructs a sky using style JSON shaped like data/sky.json. It
+// applies NewSky’s validation and returns nil and an error for malformed styles
+// or unparseable colours.
 func ReadSky(data []byte, centre nilgai.Position, width float64,
 	pixels int, profiles []radiation.Profile,
 	reader profile.Profile) (*Sky, error) {
@@ -178,9 +167,8 @@ func profileNamed(profiles []radiation.Profile,
 	return found, false
 }
 
-// markInk returns the mark's colour: its starting colour moved into the
-// reader's prose band of contrast, so the mark reads first. On a refusal
-// markInk returns nil.
+// markInk adjusts the reference mark into the reader’s prose contrast band. If
+// the contrast cannot be met, it returns nil and an error.
 func markInk(style skyStyle, reader profile.Profile,
 	surfaces []colour.RGB) (*colour.RGB, error) {
 	start, err := colour.Parse(style.mark)
@@ -197,10 +185,9 @@ func markInk(style skyStyle, reader profile.Profile,
 	return &ink, nil
 }
 
-// instrumentInk returns an instrument's colour: its profile's hue, at the
-// lightness giving the contrast data/sky.json sets against the ground. On
-// a contrast under the reader's floor for marks scanned and not read,
-// instrumentInk refuses and returns nil.
+// instrumentInk keeps a profile’s hue while adjusting lightness to its
+// configured contrast against the background. Targets below the reader’s
+// minimum for scanned marks return nil and an error.
 func instrumentInk(style skyStyle, reader profile.Profile,
 	each radiation.Profile, surfaces []colour.RGB) (*colour.RGB, error) {
 	aim, given := style.contrast[each.Name]
@@ -223,9 +210,9 @@ func instrumentInk(style skyStyle, reader profile.Profile,
 	return &ink, nil
 }
 
-// startingInk returns a profile's colour at the middle of its band, in
-// libreadme's 0 to 255. The middle is the geometric mean of the band's
-// ends, which is even in the logarithm, as libtheme spreads its ranges.
+// startingInk samples a profile’s colour at the geometric mean of its band
+// edges, the midpoint on libtheme’s logarithmic scale. Channels use libreadme’s
+// 0 to 255 range.
 func startingInk(each radiation.Profile) colour.RGB {
 	middle := math.Sqrt(each.Source.Lo * each.Source.Hi)
 	lamps, _ := srgb.FromSwatch(each.Swatch(middle))
@@ -243,10 +230,9 @@ func opaque(each colour.RGB) color.Color {
 // channel rounds one of libreadme's 0 to 255 channels to a byte.
 func channel(value float64) uint8 { return uint8(math.Round(value)) }
 
-// Draw returns the picture: the ground, every source whose catalogue has
-// an ink, and the mark. Pixels outside the square are not painted, so a
-// source wholly outside leaves no mark, and a source whose ellipse crosses
-// the edge is drawn in part.
+// Draw renders the background, sources with an assigned instrument colour, and
+// the reference mark. Drawing is clipped to the square: ellipses that cross the
+// edge are partly visible; sources wholly outside are omitted.
 func (sky Sky) Draw(sources []nilgai.Source,
 	mark nilgai.Position) *image.RGBA {
 	picture := image.NewRGBA(image.Rect(none, none, sky.pixels,
@@ -262,12 +248,11 @@ func (sky Sky) Draw(sources []nilgai.Source,
 	return picture
 }
 
-// Strip returns several skies side by side, left to right as given. Each
-// is drawn from the same sources and mark. When the skies differ in width
-// the strip shows a zoom.
+// Strip draws panels left to right in the given order, using the same sources
+// and reference mark. Different field widths produce a zoom view.
 //
-// Strip fills the gap between skies with the first sky's between colour,
-// and is as tall as the tallest sky. Given no skies, Strip is empty.
+// Gaps use the first panel’s between colour; height is the tallest panel’s
+// height. No panels produce an empty image.
 func Strip(skies []*Sky, sources []nilgai.Source,
 	mark nilgai.Position) *image.RGBA {
 	if len(skies) == none {
@@ -291,11 +276,10 @@ func Strip(skies []*Sky, sources []nilgai.Source,
 	return strip
 }
 
-// none is the count of nothing, zero.
+// none is the zero count.
 const none = 0
 
-// one is the count of a single thing. Between n things in a row there are
-// n less one gaps.
+// one accounts for the n - 1 gaps between n panels.
 const one = 1
 
 // place returns where a position falls on the picture, in pixels from the

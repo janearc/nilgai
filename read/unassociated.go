@@ -7,23 +7,16 @@ import (
 	"github.com/janearc/nilgai"
 )
 
-// Unassociated yields what a Fermi read yields, but keeps only the sources
-// that 4FGL has no association for and that lie within limit degrees of
-// the Galactic plane. Rows the reader could not read come through as the
-// errors they are, and are not dropped.
+// Unassociated filters a Fermi sequence to sources with a blank CLASS1 and |b|
+// strictly below limit degrees from the Galactic plane. Row and input errors
+// pass through unchanged.
 //
-// Unassociated selects a 4FGL source whose CLASS1 is blank. The classes unk
-// (unknown nature) and bcu (blazar candidate of uncertain type) are
-// associations, so Unassociated does not select them.
+// Classes unk (unknown nature) and bcu (blazar candidate of uncertain type) are
+// associations for this selection. Sources from other catalogues or without a
+// CLASS1 flag are excluded.
 //
-// Unassociated never selects:
-//   - a source of another catalogue
-//   - a 4FGL source with no CLASS1 flag, because 4FGL has not said it is
-//     unassociated
-//
-// Unassociated takes |b| from the source's position, and the limit is
-// exclusive: a source at |b| equal to limit is not selected. A limit of
-// zero or less selects nothing.
+// Latitude comes from Position.GalacticLatitude. The boundary is exclusive; a
+// nonpositive limit selects nothing.
 func Unassociated(sources iter.Seq2[*nilgai.Source, error],
 	limit float64) iter.Seq2[*nilgai.Source, error] {
 	selecting := unassociation{sources: sources, limit: limit}

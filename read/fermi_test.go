@@ -35,8 +35,8 @@ type fermiCase struct {
 	Kept                                 []string
 }
 
-// refusedCase describes a row that must be refused. It holds the column
-// the row is refused at, and the words its error must and must not say.
+// refusedCase describes an invalid row, its failing column, and required or
+// forbidden error text.
 type refusedCase struct {
 	Name    string
 	Row     fermiRowSpec
@@ -207,10 +207,9 @@ func TestFermiReadsTheFluxAndKeepsTheFlags(test *testing.T) {
 	for _, each := range read.Sources {
 		flux := oneFermi(test, read, each.Row).Measurements()[none]
 		gotFirst, gotLast := flux.Bands()
-		value, valueIsEnergy := ergs(flux.Value())
-		sigma, sigmaIsEnergy := ergs(flux.Error())
+		value, sigma := fluxNumber(flux.Value()), fluxNumber(flux.Error())
 		if flux.Filter() != read.Filter || flux.Kind() != nilgai.Detection ||
-			!valueIsEnergy || !sigmaIsEnergy ||
+			flux.Value().Unit() != nilgai.ErgPerSecPerCm2 ||
 			!near(value, each.Row.Flux, read.Rel) ||
 			!near(sigma, each.Row.FluxError, read.Rel) ||
 			gotFirst != first || gotLast != last ||
@@ -229,10 +228,9 @@ func TestFermiReadsTheFluxAndKeepsTheFlags(test *testing.T) {
 	}
 }
 
-// TestFermiReadsFlagsAndSigmaApart is an anti-test. A source is not built
-// from the stated 95% axes, and not given another source's flags. One
-// sigma is under the stated axis, and a flagged source is doubtful where a
-// clean one is good.
+// Normalized axes must differ from the stated 95% axes, and each source must
+// retain its own flags. Flagged sources are Doubtful; unflagged sources are
+// Good.
 func TestFermiReadsFlagsAndSigmaApart(test *testing.T) {
 	read := loadFermi(test)
 	seen := map[string]bool{}
@@ -274,9 +272,8 @@ func TestFermiRefusesRowsWithNoEllipse(test *testing.T) {
 	}
 }
 
-// TestFermiSaysTheRightKindOfSource is an anti-test. An error does not
-// blame the wrong kind of source, and does not invent an ellipse for the
-// row.
+// Missing-ellipse errors must identify the correct source category and must not
+// fabricate an ellipse.
 func TestFermiSaysTheRightKindOfSource(test *testing.T) {
 	read := loadFermi(test)
 	for _, each := range read.Refused {
@@ -318,8 +315,7 @@ func TestFermiRefusesFiles(test *testing.T) {
 	}
 }
 
-// TestFermiNamesWhatTheFileLacks is an anti-test. A column left out is
-// named, and so is a table left out, so the caller is told what to give.
+// Missing columns and tables must be named in input-level errors.
 func TestFermiNamesWhatTheFileLacks(test *testing.T) {
 	read := loadFermi(test)
 	flagless := fermiFile(test, read.Table, withoutColumn(read, "Flags"),
@@ -350,9 +346,7 @@ func TestFermiReadsATableWithNoRows(test *testing.T) {
 	}
 }
 
-// TestFermiReadsEveryRowInOrder is an anti-test. A table of two rows
-// yields two sources, not one and not none, in the order the file has
-// them.
+// A two-row table must yield both sources in file order.
 func TestFermiReadsEveryRowInOrder(test *testing.T) {
 	read := loadFermi(test)
 	first, second := read.Sources[none].Row, read.Sources[one].Row

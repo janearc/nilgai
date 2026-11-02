@@ -20,8 +20,7 @@ const (
 // fromTheTop is the row that a read of the table starts from, row zero.
 const fromTheTop = 0
 
-// TestWriteIsReadBack checks that a table written is a table that fitsio
-// reads back, with the rows put in it.
+// Writing and reopening a FITS table must preserve every row’s values.
 func TestWriteIsReadBack(test *testing.T) {
 	type row struct {
 		Size float32 `fits:"Size"`

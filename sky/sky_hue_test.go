@@ -44,10 +44,9 @@ func profileOf(test *testing.T, name string) radiation.Profile {
 	return radiation.Profile{}
 }
 
-// TestInksKeepTheHueOfTheMiddleOfTheBand checks that each ink keeps the
-// hue its profile shows at the middle of its band. The middle is the
-// geometric mean of the band's ends, which is even in the logarithm, as
-// libtheme spreads its ranges. Only the ink's lightness moves.
+// Instrument colours must preserve the profile’s hue at the geometric mean of
+// its band edges, matching libtheme’s logarithmic scale. Only lightness may
+// change.
 func TestInksKeepTheHueOfTheMiddleOfTheBand(test *testing.T) {
 	read := loadSky(test)
 	for _, catalogue := range distinct {
@@ -63,10 +62,8 @@ func TestInksKeepTheHueOfTheMiddleOfTheBand(test *testing.T) {
 	}
 }
 
-// TestInksAreNotTheHueOfTheArithmeticMean is an anti-test. The middle of a
-// band is not its arithmetic mean. For a band as wide as Fermi's or
-// MeerKAT's the two show different hues, and the ink is nearer the
-// geometric one. The test checks Fermi.
+// Wide bands distinguish the geometric midpoint from the arithmetic one.
+// Fermi’s drawn colour must be nearer the geometric-midpoint hue.
 func TestInksAreNotTheHueOfTheArithmeticMean(test *testing.T) {
 	read := loadSky(test)
 	each := profileOf(test, catalogues[nilgai.Fermi])

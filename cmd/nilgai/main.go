@@ -1,7 +1,5 @@
-// Command nilgai is the command line for the nilgai library. It has one
-// verb for now, show. The readers will get verbs as they are written.
-// nilgai is built on pzm, which gives it --help, --agent-help, --age and
-// --who.
+// Command nilgai draws catalogue searches with the show verb. Its command
+// interface uses pzm, which supplies --help, --agent-help, --age, and --who.
 package main
 
 import (
@@ -21,7 +19,7 @@ var build, built, who, sessions string
 // name comes first.
 const afterName = 1
 
-// main runs nilgai on what it was asked.
+// main runs the command with process arguments and standard streams.
 func main() {
 	os.Exit(run(os.Args[afterName:], os.Stdin, os.Stdout, os.Stderr,
 		build))
@@ -39,9 +37,8 @@ func tool(stamp string) *pzm.Tool {
 	return toolWith(stamp, realSearches(), band.NewEmbedded())
 }
 
-// toolWith returns nilgai with show reading the searches and the profiles
-// given. The real tool passes the real ones, and a test passes others to
-// check what show does with them.
+// toolWith builds the command with supplied searches and colour profiles. Tests
+// substitute these dependencies to check show without real files.
 func toolWith(stamp string, searches []search,
 	profiles band.ProfileSource) *pzm.Tool {
 	made := pzm.New("nilgai", "read radio, gamma, X-ray and infrared "+

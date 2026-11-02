@@ -9,18 +9,12 @@ import (
 // cell holds one flag column of a row: its name and its value, verbatim.
 type cell struct{ name, value string }
 
-// kept returns the measurement with the cells kept as flags and with the
-// quality the reader has decided on, as a list of that one measurement,
-// or nil on a refusal. The readers hand the list on to the record, which
-// refuses an empty one.
+// kept attaches the original flag cells and the reader’s quality assessment to
+// a measurement, returning the one-element slice NewSource expects.
 //
-// nilgai's record refuses:
-//   - a flag with no column name
-//   - a quality that is not good, doubtful or bad
-//
-// kept's callers write both in code, so no input can cause either. If a
-// reader's code is wrong, kept returns the refusals joined, for the caller
-// to return, with a nil list; kept neither hides them nor panics.
+// An empty flag name or undefined quality indicates a reader programming error:
+// callers supply both in code. These validation errors are joined and returned
+// with a nil slice.
 func kept(measurement nilgai.Measurement, quality nilgai.Quality,
 	cells ...cell) ([]nilgai.Measurement, error) {
 	flags := make([]nilgai.Flag, len(cells))

@@ -21,18 +21,13 @@ func FilterBands(name string) (first, last bands.Band, err error) {
 	return ReadFilterBands(filterData, name)
 }
 
-// ReadFilterBands returns the bands of the filter called name, read from
-// JSON shaped like data/filters.json. Each filter in it has:
-//   - a name
-//   - a citation
-//   - a flag saying whether its edges are approximate
-//   - the two ends of its band, each a value and a unit, in either order
+// ReadFilterBands finds the named filter in JSON shaped like data/filters.json
+// and returns its first and last libtheme bands. Each entry records a name,
+// citation, approximate flag, and two edges with values and units; the edges
+// may be in either order.
 //
-// ReadFilterBands refuses:
-//   - JSON it cannot read
-//   - a name that is missing, or listed twice
-//   - an edge in a unit nilgai does not read
-//   - edges that BandsBetween refuses, such as a band with no width
+// Invalid JSON, missing or duplicate names, unsupported units, or invalid
+// bounds return an error. Bounds follow BandsBetween’s contract.
 func ReadFilterBands(data []byte, name string) (first, last bands.Band,
 	err error) {
 	var read struct {

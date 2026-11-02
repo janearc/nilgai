@@ -24,7 +24,7 @@ import (
 //go:embed testdata/*.json
 var fixtures embed.FS
 
-// none is the count of nothing, zero.
+// none is the zero count.
 const none = 0
 
 // one is the count of a single thing.
@@ -201,9 +201,8 @@ func runShow(each call, named map[string]string) (code int, out, errs []byte) {
 	return code, wrote.Bytes(), said.Bytes()
 }
 
-// TestShowRefusesWhatItCannotDraw checks that a call that cannot be
-// answered exits 1, writes no picture, and says what was wrong, naming the
-// flag or the file.
+// Invalid requests must exit with status 1, write no image, and name the
+// offending flag or file on standard error.
 func TestShowRefusesWhatItCannotDraw(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -246,9 +245,8 @@ func inked(picture image.Image) bool {
 	return false
 }
 
-// TestShowDrawsWhatItIsGiven checks that a call it can answer exits 0,
-// says nothing, and writes a png of the size asked for with something
-// drawn in it.
+// A valid request must exit successfully, write a PNG of the requested
+// dimensions with visible content, and leave standard error empty.
 func TestShowDrawsWhatItIsGiven(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -267,9 +265,8 @@ func TestShowDrawsWhatItIsGiven(test *testing.T) {
 	}
 }
 
-// TestShowDrawsNothingWhereThereIsNothing is an anti-test. A call centred
-// where the search has nothing draws a picture without any source and does
-// not fail. The picture is not the one centred on the source.
+// An empty field must render successfully without sources. Its image must
+// differ from a field centred on a source.
 func TestShowDrawsNothingWhereThereIsNothing(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -283,10 +280,9 @@ func TestShowDrawsNothingWhereThereIsNothing(test *testing.T) {
 	}
 }
 
-// TestShowNamesUnreadRowsAfterThePicture checks that rows that cannot be
-// read are named after the picture is written. The call fails, the
-// picture is whole with what could be read, and every row that was lost is
-// on standard error.
+// Row errors must be reported after a complete image is written. The command
+// fails, but valid sources remain visible and every unread row appears on
+// standard error.
 func TestShowNamesUnreadRowsAfterThePicture(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -321,9 +317,7 @@ func TestShowDrawsOnePanelForEachWidth(test *testing.T) {
 	}
 }
 
-// TestShowDrawsTheSamePictureEachTime checks that the same call draws the
-// same picture every time, and that the order the flags are given in does
-// not change it.
+// Repeated calls must produce the same image regardless of input flag order.
 func TestShowDrawsTheSamePictureEachTime(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -373,8 +367,8 @@ func TestShowFailsWhenAReaderCannotBeMade(test *testing.T) {
 	}
 }
 
-// TestShowFailsWhenTheProfilesCannotBeRead is the anti-test: profiles that
-// cannot be read fail the call, asked for once, and nothing is drawn.
+// A profile-loading error must fail the command before drawing. The profile
+// source must be queried only once.
 func TestShowFailsWhenTheProfilesCannotBeRead(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -391,9 +385,8 @@ func TestShowFailsWhenTheProfilesCannotBeRead(test *testing.T) {
 	}
 }
 
-// TestShowFailsWhenTheProfilesGiveChandraNoBand: profiles with none for
-// Chandra fail the call at the Chandra reader, and nothing is drawn: a
-// reader that was refused is not used.
+// A missing Chandra profile must fail reader construction without drawing or
+// using an invalid reader.
 func TestShowFailsWhenTheProfilesGiveChandraNoBand(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)
@@ -438,9 +431,8 @@ func noReader([]radiation.Profile) (reader, error) {
 	return nil, errNoReader
 }
 
-// TestShowDrawsWhatIsNamedAndNoMore is an anti-test. What is drawn
-// depends on what is named. Three searches draw something that one search
-// alone does not.
+// Selecting three searches must draw sources absent from the image produced by
+// a single search.
 func TestShowDrawsWhatIsNamedAndNoMore(test *testing.T) {
 	read := loadShow(test)
 	named := files(test, read)

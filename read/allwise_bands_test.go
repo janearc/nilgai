@@ -103,11 +103,11 @@ func TestAllWISEReadsFourBands(test *testing.T) {
 			test.Fatal(err)
 		}
 		gotFirst, gotLast := got[place].Bands()
-		value, valueIsDensity := janskys(got[place].Value())
-		sigma, sigmaIsDensity := janskys(got[place].Error())
+		value, sigma := fluxNumber(got[place].Value()),
+			fluxNumber(got[place].Error())
 		if got[place].Filter() != want.Filter || gotFirst != first ||
 			gotLast != last || got[place].Kind() != nilgai.Detection ||
-			!valueIsDensity || !sigmaIsDensity ||
+			got[place].Value().Unit() != nilgai.Jansky ||
 			!near(value, want.Value, read.Rel) ||
 			!near(sigma, want.Error, read.Rel) {
 			test.Errorf("%s read as %+v, want %v and %v in bands %v to %v",
@@ -151,18 +151,16 @@ func TestAllWISEBandUpperLimit(test *testing.T) {
 	read := loadBands(test)
 	got := readOne(test, read.Header, read.LimitRow).Measurements()
 	last := got[len(got)-one]
-	limit, isDensity := janskys(last.Value())
-	if last.Filter() != "W4" || !last.IsUpperLimit() || !isDensity ||
+	limit := fluxNumber(last.Value())
+	if last.Filter() != "W4" || !last.IsUpperLimit() ||
 		last.Error() != nil || !near(limit, read.LimitValue, read.Rel) {
 		test.Errorf("W4 read as %+v, want a limit of %v", last,
 			read.LimitValue)
 	}
 }
 
-// TestAllWISELeavesOutABandItHasNoMeasurementIn checks that a band with
-// its magnitude and error both empty, where AllWISE has no measurement,
-// gives a source without that band and not a refused row. The bands after
-// it are still read.
+// An optional band with both cells empty is omitted without rejecting the row.
+// Later populated bands must still be read.
 func TestAllWISELeavesOutABandItHasNoMeasurementIn(test *testing.T) {
 	read := loadBands(test)
 	for _, each := range read.Absent {
@@ -174,10 +172,8 @@ func TestAllWISELeavesOutABandItHasNoMeasurementIn(test *testing.T) {
 	}
 }
 
-// TestAllWISEReadsEachBandsContamination checks that each band's quality
-// comes from its own character of cc_flags. An artefact in W2 does not
-// make W1 doubtful, and a W4 artefact is W4's. Each band keeps the flags
-// whole.
+// Each band’s quality uses its own cc_flags character. Contamination in W2 must
+// not change W1’s quality, and each measurement retains the full flag strings.
 func TestAllWISEReadsEachBandsContamination(test *testing.T) {
 	read := loadBands(test)
 	for _, each := range read.Qualities {
@@ -195,9 +191,8 @@ func TestAllWISEReadsEachBandsContamination(test *testing.T) {
 	}
 }
 
-// TestAllWISEReadsASearchOfOnlyW2 checks that a search selecting W2 but
-// not W3 or W4 is read, with the bands it selects. Searches were made this
-// way before W3 and W4 were read.
+// W2 can be selected without W3 or W4. This preserves support for searches
+// exported before the reader handled all four bands.
 func TestAllWISEReadsASearchOfOnlyW2(test *testing.T) {
 	read := loadBands(test)
 	got := filtersOf(readOne(test, read.OnlyW2.Header, read.OnlyW2.Row))
@@ -259,9 +254,8 @@ func indexOf(names []string, name string) int {
 	return -one
 }
 
-// TestAllWISEReadsTheRealFourBandSearch checks that the real search around
-// Sgr A* with W2 to W4 reads whole. Each source has a W2 limit, a W3
-// detection and no W4, as its columns say.
+// The real Sgr A* search must produce W2 upper limits, W3 detections, and no W4
+// measurements, following the populated cells in each row.
 func TestAllWISEReadsTheRealFourBandSearch(test *testing.T) {
 	read := loadBands(test)
 	file, err := fixtures.ReadFile("testdata/" + read.Real.File)
@@ -281,12 +275,10 @@ func TestAllWISEReadsTheRealFourBandSearch(test *testing.T) {
 			continue
 		}
 		w2, w3 := got[one], got[halves]
-		limit, limitIsDensity := janskys(w2.Value())
-		value, valueIsDensity := janskys(w3.Value())
-		sigma, sigmaIsDensity := janskys(w3.Error())
+		limit := fluxNumber(w2.Value())
+		value, sigma := fluxNumber(w3.Value()), fluxNumber(w3.Error())
 		rel := read.Real.Rel
-		if !limitIsDensity || !valueIsDensity || !sigmaIsDensity ||
-			!w2.IsUpperLimit() || !near(limit, want.W2Limit, rel) ||
+		if !w2.IsUpperLimit() || !near(limit, want.W2Limit, rel) ||
 			w3.IsUpperLimit() || !near(value, want.W3, rel) ||
 			!near(sigma, want.W3Error, rel) {
 			test.Errorf("%s: W2 %+v, W3 %+v", want.ID, w2, w3)
@@ -294,9 +286,8 @@ func TestAllWISEReadsTheRealFourBandSearch(test *testing.T) {
 	}
 }
 
-// TestAllWISEReadsTheEarlierRealSearchsW2 checks that the search made
-// before W3 and W4 were read, which has W2 columns, now has its W2 read.
-// W2 is a limit, because its error is empty.
+// The earlier Sgr A* export includes W2 columns. They must now be read as upper
+// limits because their uncertainty cells are empty.
 func TestAllWISEReadsTheEarlierRealSearchsW2(test *testing.T) {
 	read := loadAllwise(test)
 	file, err := fixtures.ReadFile("testdata/" + read.Sgra.File)

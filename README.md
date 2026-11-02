@@ -1,93 +1,112 @@
 # nilgai
 
-nilgai: hindi nīl (blue) and gāy (cow), a nilgai is a large blue-grey antelope
-native to asia, sharing the grasslands of india, nepal and pakistan.
-supposedly there is a feral herd in texas, but we don't talk about that.
+A nilgai—from Hindi nīl (blue) and gāy (cow)—is a large blue-grey
+antelope native to Asia, sharing the grasslands of India, Nepal, and
+Pakistan. Supposedly there is a feral herd in Texas, but we don’t talk
+about that.
 
-additionall, nilgai is a golang library. it exists to read five separate
-astronomy catalogues:
+Nilgai is also a Go library. I’m building it to look through the Milky
+Way’s zone of avoidance for previously undocumented high-energy sources,
+particularly blazar candidates. Radio, gamma-ray, X-ray, and infrared
+catalogues each tell part of that story.
 
-- MeerKAT, radio, 1.28 GHz
-- Fermi-LAT 4FGL, gamma rays
-- Chandra Source Catalog, X-rays
-- AllWISE, mid-infrared at 3.4, 4.6, 12 and 22 microns (W1 to W4), one row for
-  each source
-- Neowise, mid-infrared at 3.4 and 4.6 microns, with many looks over years
+Basically, I’m looking for little blue dots (this is a joke, I am
+hilarious) in the hardest place in the universe to actually look for
+things. It’s fine.
 
-for the express purpose of looking across the 'avoidance zone' of the plane of
-the milky way to find previously undocumented high energy xray and neutrino
-sources (which is to say, blazars). 
+## What it does
 
-each catalogue states positions, errors, brightness and quality flags in
-its own way. nilgai normalizes to the same units, so a later library can
-compare a gamma-ray source and an infrared dot as the same kind of thing.
+Nilgai converts catalogue rows into a common record: positions, positional
+uncertainties, brightness, and quality flags in consistent units. That
+gives a caller something useful to compare across instruments. Matching
+sources and deciding whether a candidate is an AGN remain separate work.
 
-basically, i'm looking for little blue dots (this is a joke, i am hilarious)
-in the hardest place in the universe to actually look for things. it's fine.
+| Catalogue | Coverage | Reader |
+|---|---|---|
+| Chandra Source Catalog | X-rays | `read.Chandra`, TAP text export |
+| AllWISE | Mid-infrared, W1–W4: 3.4, 4.6, 12, and 22 µm | `read.AllWISE`, IRSA CSV export |
+| Fermi-LAT 4FGL | Gamma rays | `read.Fermi`, FITS point-source table |
+| MeerKAT | Radio, 1.28 GHz | Interface defined; reader planned |
+| Neowise | Repeated mid-infrared observations at 3.4 and 4.6 µm | Interface defined; reader planned |
 
-## what it does not do
+Readers yield a source or a `*nilgai.RowError` for each row. A row error
+names the input, data row, and column, then reading continues. An error
+that prevents reading the input is yielded once and ends the sequence.
+Readers consume the supplied stream; callers open the files.
 
-this library cannot determine what *is* an AGN, but it serves to find things
-that might be by correlating various data sources.
+AllWISE requires W1 and can also read W2–W4. Optional bands need both
+magnitude and uncertainty columns. A populated magnitude with an empty
+uncertainty is an upper limit; an optional band with both cells empty
+has no measurement and is omitted.
 
-## the record
+## The record
 
-- `Source`: one catalogue row. the catalogue's own identifier, a position
-  (ICRS right ascension and declination in degrees), an error ellipse, and one
-  or more `Measurement`s.
-- `ErrorEllipse`: semi-axes at one sigma in arcseconds, position angle in
-  degrees east of north. It also keeps the confidence the catalogue stated
-  (Fermi and Chandra state 95%; MeerKAT states one sigma) and the catalogue's
-  own axes, so the conversion can be checked.
-- nilgai has no band type. one slice of the spectrum is libtheme's
-  `bands.Band`, from my
-  [libtheme](https://github.com/janearc/libtheme-css/primitives/bands) package.
-  `band.BandsBetween` turns a catalogue filter's two edges in nm into the first
-  and last libtheme bands it covers. Fermi's range runs from 50 MeV to 1 TeV.
-  (more details on this in the libtheme source)
-- `Measurement`: the brightness through one filter, with the catalogue's name
-  for the filter (such as "W1") and the libtheme bands it covers. The unit is in
-  the type: `FluxDensity` is Jy and `EnergyFlux` is erg/s/cm^2. Mixing them is
-  refused. An upper limit is its own kind. The catalogue's flags are kept
-  verbatim beside nilgai's reading of them.
-- `LightCurve`: the Neowise looks at one position, in time order.
+- `Source` holds the catalogue’s identifier, an ICRS position in degrees,
+  an error ellipse, the position epoch when known, and measurements.
+- `ErrorEllipse` stores one-sigma semi-axes in arcseconds and a position
+  angle in degrees east of north. It also retains the catalogue’s stated
+  axes and confidence level so the conversion can be checked.
+- `Measurement` records a detection or upper limit through a named filter,
+  such as W1, and the libtheme bands it covers. `FluxDensity` is in Jy;
+  `EnergyFlux` is in erg/s/cm². Values and uncertainties must use the same
+  unit. Original value text and catalogue flags can be retained alongside
+  Nilgai’s quality assessment.
+- `When` stores an MJD or an unknown time. `LightCurve` groups measurements
+  at one position in time order, ready for the planned Neowise reader.
 
-each conversion is a named function that cites where its numbers come
-from: `RadiusFactor` and `ToOneSigma` for ellipse confidence,
-`read.WiseFlux` for WISE Vega magnitudes (zero points from the WISE
-explanatory supplement, section IV.4.h, after Jarrett et al. 2011, ApJ 735,
-112).
-units, constants and conversions between energy, frequency and
-wavelength all come from libtheme (primitives/si, primitives/length and
-spaces/radiation); nilgai defines none of its own. wavelengths are plain
-nanometres, as libtheme has them.
+`RadiusFactor` and `ToOneSigma` convert positional confidence levels.
+`read.WiseFlux` converts WISE Vega magnitudes using zero points cited in
+the WISE Explanatory Supplement, IV.4.h, after Jarrett et al. 2011,
+ApJ 735, 112. Its symmetric flux uncertainty is a first-order approximation.
 
-## other stuff
+Units and spectral conversions come from
+[libtheme](https://github.com/janearc/libtheme-css). Wavelengths are in
+nanometres. `band.BandsBetween` maps a filter’s bounds onto libtheme’s
+`bands.Band`; Nilgai has no separate spectral band type. Fermi’s configured
+colour profile spans 50 MeV to 1 TeV; the Energy_Flux100 measurement
+filter covers 100 MeV to 100 GeV.
 
-`nilgai` is built on [puzzlemouth](https://github.com/janearc/puzzlemouth).
+## Packages and command
 
-so far there are readers for chandra, allwise and fermi: `read.Chandra`,
-`read.AllWISE` and `read.Fermi`. meerkat and neowise are still to come.
-`nilgai show` draws their searches around a position as a png.
+The root package defines the record. Three packages build on it:
 
-`read.Unassociated` picks out of a fermi read the sources that 4FGL has not
-associated with anything (a blank class), within so many degrees of the
-galactic plane. `Position.GalacticLatitude` is the latitude it asks.
+- `band` holds filter edges, citations, and false-colour profiles.
+- `read` parses catalogues and converts their values.
+- `sky` draws one-sigma error ellipses and arranges panels with `Strip`.
 
-the record is the root package. the rest is split by what it does, and each
-imports the record, never the other way round:
+`read.Unassociated` selects Fermi sources with a blank CLASS1 within an
+exclusive latitude bound around the Galactic plane. Sources classed unk
+or bcu are excluded by this selection. Errors pass through unchanged.
 
-- `band/`: the bands, the filters and the false colour profiles.
-- `read/`: the readers.
-- `sky/`: the picture, `Sky`, `Draw` and `Strip`.
-
-## building
+The command uses [puzzlemouth](https://github.com/janearc/puzzlemouth).
+`nilgai show` draws selected searches around a position as a PNG:
 
 ```sh
-$ game build
-$ game check
+nilgai show --chandra chandra.tsv --allwise allwise.csv \
+  --ra 266.4168371 --dec -29.0078106 --width 12 --pixels 600 \
+  > sgra.png
 ```
 
-## author
+Add `--fermi catalogue.fit` to include 4FGL. A width list such as
+`--width 12,6` draws panels side by side. Each source has its instrument’s
+colour, adjusted to the reader’s contrast requirements through libreadme.
+Unreadable rows are reported on standard error after the image is written;
+the image still contains the valid sources, and the command exits with an error.
 
-`jane michelle arc <jmich@fastmail.nl>`
+## Building and checking
+
+Use the Go version in `go.mod`, then run:
+
+```sh
+game build
+game check
+```
+
+Filter edges, colour mappings, and drawing styles live in JSON data files
+beside their packages. Measured bounds carry citations; chosen display
+colours remain identified as choices. Tests include small catalogue
+fixtures, real exported rows, and property checks for ellipse geometry.
+
+## Author
+
+Jane Michelle Arc · jmich@fastmail.nl

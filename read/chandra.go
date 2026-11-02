@@ -50,10 +50,9 @@ const chandraBand = "b"
 // the CSC's band edges, 0.5 to 7 keV.
 const chandraProfile = "chandra"
 
-// NewChandra returns a Chandra that takes its band from the profile named
-// chandra among the profiles given, as band.Profiles reads them.
-// NewChandra refuses profiles that have no profile of that name, and
-// returns nil on a refusal.
+// NewChandra constructs a reader using the chandra profile from the supplied
+// profiles, as returned by band.Profiles. A missing profile returns nil and an
+// error.
 func NewChandra(profiles []radiation.Profile) (*Chandra, error) {
 	first, last, err := profileBands(profiles, chandraProfile)
 	if err != nil {
@@ -109,9 +108,9 @@ func (reading chandraReading) each(yield func(*nilgai.Source, error) bool) {
 	}
 }
 
-// source converts one row of a search to a Source, or returns nil, the
-// column that could not be read, and why. When the nilgai record refuses
-// the Source, the error names no column.
+// source converts one row into the common record. On failure it returns nil,
+// the affected column, and the error. Record-level validation errors have no
+// column name.
 func (table Chandra) source(
 	cells map[string]string,
 ) (*nilgai.Source, string, error) {
@@ -133,22 +132,19 @@ func (table Chandra) source(
 	}
 	var epoch nilgai.When // the CSC states no epoch for its positions
 	source, err := nilgai.NewSource(nilgai.Chandra, cells["name"], position,
-		ellipse, epoch, []nilgai.Measurement{*flux})
+		ellipse, epoch, []nilgai.Measurement{flux})
 	return source, "", err
 }
 
-// chandraEllipse returns the row's 95% ellipse, scaled to one sigma. The
-// CSC writes its two radii as r0, the major, and r1, the minor. They are
-// equal for most sources, and r1 sometimes comes out larger in the last
-// digits. The larger radius is taken as the major.
+// chandraEllipse scales the row’s 95% ellipse to one sigma. CSC labels r0 as
+// major and r1 as minor, but rounding can make r1 slightly larger. The larger
+// radius becomes the major axis.
 //
-// chandraEllipse takes the CSC's angle as r0's. When r1 is the larger,
-// the axes swap: the major axis is a quarter turn from r0's, so the angle
-// turns a quarter turn too.
+// The input angle belongs to r0. Swapping axes rotates the angle by a
+// quarter-turn to preserve the ellipse’s orientation.
 //
-// chandraEllipse checks the angle against [0, 360) as the CSC gave it,
-// before ordering the axes, so a bad angle is refused the same way
-// whichever radius is larger, and on its own column.
+// Validate the catalogue’s angle in [0, 360) before sorting the axes, so an
+// invalid angle reports the same column regardless of their order.
 func chandraEllipse(got map[string]float64) (ellipse nilgai.ErrorEllipse,
 	column string, err error) {
 	given := got["err_ellipse_ang"]
@@ -163,14 +159,13 @@ func chandraEllipse(got map[string]float64) (ellipse nilgai.ErrorEllipse,
 	return ellipse, "err_ellipse_r0", err
 }
 
-// flux returns the broad-band flux as a detection. The CSC gives 68%
-// limits, which are one sigma, and they are not quite even on either side
-// of the flux. The error is half the width between them. The CSC gives
-// all three in erg/s/cm^2.
-func (table Chandra) flux(got map[string]float64) (*nilgai.Measurement,
+// flux constructs a broad-band detection. It approximates the uncertainty as
+// half the interval between CSC’s 68% limits, which may be asymmetric around
+// the reported flux.
+func (table Chandra) flux(got map[string]float64) (nilgai.Measurement,
 	error) {
 	width := got["flux_aper_hilim_b"] - got["flux_aper_lolim_b"]
-	sigma := nilgai.ErgPerSecPerCm2(nilgai.Half(width))
+	sigma := nilgai.EnergyFlux(nilgai.Half(width))
 	return nilgai.NewDetection(chandraBand, table.first, table.last,
-		nilgai.ErgPerSecPerCm2(got["flux_aper_b"]), sigma)
+		nilgai.EnergyFlux(got["flux_aper_b"]), sigma)
 }

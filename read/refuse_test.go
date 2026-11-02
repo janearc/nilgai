@@ -78,8 +78,8 @@ func withoutCell(row, separator string, place int) string {
 		separator)
 }
 
-// namesAColumn says whether the read ended in one error that names the
-// column and is not a row's, with no source read.
+// namesAColumn checks for one input-level error naming the missing column, with
+// no sources returned.
 func namesAColumn(sources []nilgai.Source, errs []error, column string) bool {
 	var row *nilgai.RowError
 	return len(sources) == none && len(errs) == one &&
@@ -87,8 +87,8 @@ func namesAColumn(sources []nilgai.Source, errs []error, column string) bool {
 		strings.Contains(errs[none].Error(), column)
 }
 
-// namesACell says whether the read gave one row error naming the column,
-// and no source.
+// namesACell checks for one row error naming the invalid column, with no
+// sources returned.
 func namesACell(sources []nilgai.Source, errs []error, column string) bool {
 	var row *nilgai.RowError
 	return len(sources) == none && len(errs) == one &&
@@ -131,10 +131,8 @@ func TestChandraNamesEachCellItCannotRead(test *testing.T) {
 	}
 }
 
-// TestChandraSaysAnEmptyCellIsEmpty is an anti-test. An empty cell is
-// refused as empty, because the catalogue has no value there, and not as
-// the parse error that an empty string would give. A cell that is text is
-// not called empty.
+// Empty numeric cells must be reported as missing values. Nonempty invalid text
+// must retain a distinct parsing error.
 func TestChandraSaysAnEmptyCellIsEmpty(test *testing.T) {
 	for place := chandraRAAt; place <= chandraHighAt; place++ {
 		for cell, want := range map[string]bool{"": true, "north": false} {
@@ -176,11 +174,9 @@ func TestChandraRefusesEllipsesTheRecordRefuses(test *testing.T) {
 	}
 }
 
-// TestChandraRefusesAnAngleOutsideTheCircleEitherWay is an anti-test. An
-// angle outside [0, 360) is refused on err_ellipse_ang whichever radius is
-// the larger. When r1 is the larger, the axes are swapped and the angle
-// turned a quarter turn. That turn must not bring a negative angle into
-// range, or bring an angle past a full turn back into it.
+// Invalid angles must fail on err_ellipse_ang before axes are swapped. The
+// quarter-turn used for a swap must not normalize invalid input back into
+// range.
 func TestChandraRefusesAnAngleOutsideTheCircleEitherWay(test *testing.T) {
 	radii := []pair{
 		{"r0 above r1", "0.7", "0.6"},
@@ -314,10 +310,8 @@ func TestAllWISERefusesErrorsNoEllipseCouldHave(test *testing.T) {
 	}
 }
 
-// TestAllWISERefusesAnErrorBelowNoneOnItsOwnColumn is an anti-test. sigra
-// and sigdec are squared, so a negative one would read as its positive
-// twin. Each is refused, and the row error names that column, as it does
-// for w1sigmpro.
+// Negative sigra and sigdec must fail before squaring hides their sign. Each
+// error must name its own column, including w1sigmpro.
 func TestAllWISERefusesAnErrorBelowNoneOnItsOwnColumn(test *testing.T) {
 	fixture := loadAllwise(test)
 	for _, bad := range []string{"-0.2", "-1e-9", "NaN", "Inf", "-Inf"} {
@@ -382,9 +376,8 @@ const onlyW1 = `{"filters": [{"name": "W1", "from": {"value": 2.8,
 const onlyFermi = `{"filters": [{"name": "Energy_Flux100", "from":
 	{"value": 100, "unit": "MeV"}, "to": {"value": 100, "unit": "GeV"}}]}`
 
-// TestReadersNeedTheirOwnFilter is an anti-test. A reader is made from
-// filters that include its own filter, and not from filters that have only
-// another reader's.
+// Each reader requires its own filter data. A valid filter for another
+// catalogue must not satisfy that dependency.
 func TestReadersNeedTheirOwnFilter(test *testing.T) {
 	if _, err := read.ReadFermi([]byte(onlyW1)); err == nil {
 		test.Error("a Fermi reader was made with only W1")

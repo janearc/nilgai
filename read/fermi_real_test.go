@@ -50,12 +50,9 @@ func loadRealFermi(test *testing.T) (realFermi, []byte) {
 	return account.Real, file
 }
 
-// TestFermiReadsTheRealRows checks the real rows in the order the file
-// has them:
-//   - the Galactic Centre source is a source of the 4FGL catalogue, at its
-//     real position, with its real ellipse and flux, and with its flags
-//     kept and read as doubtful
-//   - the other two are named as rows that were lost
+// Real 4FGL rows must retain file order. The Galactic Centre source keeps its
+// position, ellipse, flux, and flags with Doubtful quality; rows without
+// ellipses are reported as row errors.
 func TestFermiReadsTheRealRows(test *testing.T) {
 	account, file := loadRealFermi(test)
 	sources, errs := readFermiFile(test, file)
@@ -72,10 +69,8 @@ func TestFermiReadsTheRealRows(test *testing.T) {
 	ra, dec := Num(position.RA()), Num(position.Dec())
 	major, minor := Num(ellipse.StatedSemiMajor()), Num(ellipse.StatedSemiMinor())
 	angle := Num(ellipse.PositionAngle())
-	value, valueIsEnergy := ergs(flux.Value())
-	sigma, sigmaIsEnergy := ergs(flux.Error())
+	value, sigma := fluxNumber(flux.Value()), fluxNumber(flux.Error())
 	if got.ID() != want.ID || got.Catalogue() != nilgai.Fermi ||
-		!valueIsEnergy || !sigmaIsEnergy ||
 		!near(ra, want.RA, rel) || !near(dec, want.Dec, rel) ||
 		!near(major, want.StatedMajor, rel) ||
 		!near(minor, want.StatedMinor, rel) ||
@@ -93,10 +88,9 @@ func TestFermiReadsTheRealRows(test *testing.T) {
 	}
 }
 
-// TestFermiRefusesTheRealRowsWithNoEllipse is an anti-test. The two real
-// rows without an ellipse are refused as rows, and not as the end of the
-// file. Each is refused for its own reason, and the reason is the right
-// one: an extended source is not called a nova.
+// Missing ellipses must produce row errors without ending the sequence. Each
+// error must identify the correct reason, distinguishing extended sources from
+// externally fixed positions.
 func TestFermiRefusesTheRealRowsWithNoEllipse(test *testing.T) {
 	account, file := loadRealFermi(test)
 	_, errs := readFermiFile(test, file)

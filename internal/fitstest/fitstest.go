@@ -1,6 +1,5 @@
-// Package fitstest writes small FITS binary tables, for the tests of
-// nilgai's readers and for the program that cuts their fixture. It lives
-// inside internal so that it is not part of the library.
+// Package fitstest writes small FITS binary tables for reader tests and fixture
+// generation. It is internal to Nilgai.
 package fitstest
 
 import (
@@ -9,10 +8,9 @@ import (
 	"github.com/astrogo/fitsio"
 )
 
-// Write writes a FITS file to out. The file holds an empty primary
-// header, then one binary table of the name given, with the columns given
-// and a row for each of rows. Each row is a pointer to a struct whose
-// fields carry fits tags naming the columns they fill.
+// Write emits an empty primary HDU followed by a named binary table with the
+// supplied columns and rows. Each row must be a pointer to a struct whose fits
+// tags identify the columns.
 func Write(out io.Writer, name string, columns []fitsio.Column,
 	rows ...any) error {
 	file, err := fitsio.Create(out)

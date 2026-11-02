@@ -2,8 +2,7 @@ package nilgai
 
 import "math"
 
-// none is the count of nothing, zero. It is the origin of every scale in
-// this package: a length, a flux and a count all start here.
+// none is the zero value used for counts and nonnegative quantities.
 const none = 0
 
 // ArcsecondsPerDegree and the constants with it are the units of angle
@@ -15,8 +14,7 @@ const (
 	// DegreesInHalfACircle is the degrees in half a circle, which is pi
 	// radians.
 	DegreesInHalfACircle = 180
-	// Halves is the number of equal parts in a whole that a half is one
-	// of.
+	// Halves is the divisor for splitting a value into two equal parts.
 	Halves = 2
 )
 
@@ -24,8 +22,8 @@ const (
 // error on either side, and the reach of a pen is half its width.
 func Half(value float64) float64 { return value / Halves }
 
-// Finite reports whether value is neither NaN nor an infinity. The
-// packages beside this one use it so that they refuse the same inputs.
+// Finite reports whether value is neither NaN nor infinite. Shared validation
+// keeps all packages consistent.
 func Finite(value float64) bool {
 	return !math.IsNaN(value) && !math.IsInf(value, none)
 }
@@ -35,8 +33,7 @@ func Positive(value float64) bool {
 	return Finite(value) && value > none
 }
 
-// NotBelowNone reports whether value is a finite number that is not under
-// zero.
+// NotBelowNone reports whether value is finite and nonnegative.
 func NotBelowNone(value float64) bool {
 	return Finite(value) && value >= none
 }

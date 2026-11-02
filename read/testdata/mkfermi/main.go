@@ -65,10 +65,10 @@ type row struct {
 	Flags     int16   `fits:"Flags"`
 }
 
-// written holds a row as it is written. fitsio writes a Go string with a
-// byte in front of it, which loses the last letter of a name as long as
-// its column, such as 4FGL J0058.0-7245e. A byte array is written as it
-// is, padded with spaces as the real file pads its text.
+// written is the row representation passed to fitsio. Its string encoding adds
+// a leading byte, truncating full-width names such as 4FGL J0058.0-7245e. Byte
+// arrays preserve the full column width and space padding used by the
+// catalogue.
 type written struct {
 	Name      [18]byte `fits:"Source_Name"`
 	RA        float32  `fits:"RAJ2000"`

@@ -6,7 +6,7 @@ import (
 	"github.com/janearc/nilgai"
 )
 
-// odd is five, an odd number that two does not divide into a whole number.
+// odd is an odd integer used to check division by two.
 const odd = 5.0
 
 // minutesInDegree and secondsInMinute make up a degree of arc: sixty

@@ -32,13 +32,12 @@ func (kind Kind) String() string {
 	return "invalid"
 }
 
-// Measurement holds the brightness of one source, or one look, through
-// one filter. It records the filter's name in the catalogue, such as
-// "W1", and the run of libtheme bands the filter covers. See
-// band.BandsBetween.
+// Measurement records brightness through one filter for a source or a single
+// exposure. It keeps the catalogue’s filter name, such as W1, and the
+// corresponding span of libtheme bands; see band.BandsBetween.
 //
-// Every Measurement comes from NewDetection or NewUpperLimit. Only the
-// With methods change it, and each returns a new Measurement.
+// Construct measurements with NewDetection or NewUpperLimit. The With methods
+// return modified copies.
 type Measurement struct {
 	filter  string
 	first   bands.Band
@@ -52,61 +51,56 @@ type Measurement struct {
 	raw     string
 }
 
-// NewDetection returns a Measurement of a measured flux and its
-// one-sigma error, through the named filter covering libtheme bands first
-// to last. The flux and its error are one type of Flux, so a flux density
-// with an energy-flux error does not compile.
+// NewDetection constructs a measured flux with its one-sigma uncertainty
+// through the named filter, covering libtheme bands first to last.
 //
-// NewDetection refuses, and returns nil on a refusal:
-//   - a flux or error below zero, NaN or infinite
-//   - a filter with no name
-//   - a first band above the last
-//
-// NewDetection's measurement starts with Quality Good; WithReading sets
-// it from the flags.
-func NewDetection[Of oneFlux](
+// It rejects missing, negative, or nonfinite fluxes, mismatched units, an empty
+// filter name, and reversed band bounds. Quality starts as Good; WithReading
+// attaches the catalogue’s flags and their interpretation.
+func NewDetection(
 	filter string,
 	first, last bands.Band,
-	value, sigma Of,
-) (*Measurement, error) {
-	if why := whyNotAFlux(float64(value)); why != nil {
-		return nil, fmt.Errorf("value %w", why)
+	value, sigma Flux,
+) (measurement Measurement, err error) {
+	if err = checkFlux("error", sigma); err != nil {
+		return measurement, err
 	}
-	if why := whyNotAFlux(float64(sigma)); why != nil {
-		return nil, fmt.Errorf("error %w", why)
+	if err = checkFlux("value", value); err != nil {
+		return measurement, err
 	}
-	if why := whyNotAFilter(filter, first, last); why != nil {
-		return nil, why
+	if sigma.Unit() != value.Unit() {
+		return measurement, fmt.Errorf(
+			"value is in %s but error is in %s",
+			value.Unit(), sigma.Unit())
 	}
-	return &Measurement{filter: filter, first: first, last: last,
+	if err = checkFilter(filter, first, last); err != nil {
+		return measurement, err
+	}
+	return Measurement{filter: filter, first: first, last: last,
 		kind: Detection, value: value, err: sigma, quality: Good}, nil
 }
 
-// NewUpperLimit returns a Measurement that says the flux through the
-// named filter, covering libtheme bands first to last, is at most the
-// limit. The Quality starts as Good.
-//
-// NewUpperLimit refuses what NewDetection refuses of a flux and a filter,
-// and returns nil on a refusal.
-func NewUpperLimit[Of oneFlux](
+// NewUpperLimit constructs a flux limit through the named filter, covering
+// libtheme bands first to last. The limit must be finite and nonnegative, the
+// filter must have a name, and band bounds must be ordered. Quality starts as
+// Good; there is no uncertainty value for an upper limit.
+func NewUpperLimit(
 	filter string,
 	first, last bands.Band,
-	limit Of,
-) (*Measurement, error) {
-	if why := whyNotAFlux(float64(limit)); why != nil {
-		return nil, fmt.Errorf("limit %w", why)
+	limit Flux,
+) (measurement Measurement, err error) {
+	if err = checkFlux("limit", limit); err != nil {
+		return measurement, err
 	}
-	if why := whyNotAFilter(filter, first, last); why != nil {
-		return nil, why
+	if err = checkFilter(filter, first, last); err != nil {
+		return measurement, err
 	}
-	return &Measurement{filter: filter, first: first, last: last,
+	return Measurement{filter: filter, first: first, last: last,
 		kind: UpperLimit, value: limit, quality: Good}, nil
 }
 
-// whyNotAFilter returns why a filter cannot label a measurement: it has
-// no name, or its first band is above its last. It returns nil for a
-// filter that can.
-func whyNotAFilter(filter string, first, last bands.Band) error {
+// checkFilter rejects an empty filter name or reversed band bounds.
+func checkFilter(filter string, first, last bands.Band) error {
 	if filter == "" {
 		return errors.New("measurement has no filter")
 	}
@@ -131,9 +125,9 @@ func (measurement Measurement) WithRaw(raw string) Measurement {
 	return measurement
 }
 
-// WithReading returns the measurement with the catalogue's flags, kept as
-// given, and nilgai's reading of them. WithReading refuses a reading that
-// is not good, doubtful or bad, and returns nil on a refusal.
+// WithReading returns a copy with the catalogue’s flags and their quality
+// assessment. Flags are copied. An undefined quality returns nil and an error;
+// valid qualities are Good, Doubtful, and Bad.
 func (measurement Measurement) WithReading(quality Quality,
 	flags []Flag) (*Measurement, error) {
 	if !quality.valid() {
@@ -144,9 +138,8 @@ func (measurement Measurement) WithReading(quality Quality,
 	return &read, nil
 }
 
-// readAs returns the measurement with the flags and the quality that a
-// reader has already decided on. The reader names the quality itself, so
-// readAs does not check it.
+// readAs attaches a quality assessment and a copy of the flags. Callers supply
+// a known quality constant, so it does not repeat validation.
 func (measurement Measurement) readAs(quality Quality,
 	flags []Flag) Measurement {
 	measurement.quality = quality
@@ -178,7 +171,7 @@ func (measurement Measurement) Value() Flux { return measurement.value }
 // Error returns nil for an upper limit.
 func (measurement Measurement) Error() Flux { return measurement.err }
 
-// Time returns the time of a single look, when the measurement is one.
+// Time returns the observation time, when the measurement has one.
 func (measurement Measurement) Time() When { return measurement.when }
 
 // Flags returns the catalogue's flags for this measurement, verbatim.
@@ -186,13 +179,13 @@ func (measurement Measurement) Flags() []Flag {
 	return slices.Clone(measurement.flags)
 }
 
-// Quality returns nilgai's reading of Flags.
+// Quality returns Nilgai’s interpretation of the catalogue flags.
 func (measurement Measurement) Quality() Quality { return measurement.quality }
 
 // Raw returns the catalogue's own text for the value, if it was kept.
 func (measurement Measurement) Raw() string { return measurement.raw }
 
-// valid says whether a constructor made the measurement.
+// valid reports whether a constructor initialized the measurement.
 func (measurement Measurement) valid() bool {
 	return measurement.kind != kindUnset
 }

@@ -20,10 +20,8 @@ type Position struct {
 	ra, dec float64
 }
 
-// NewPosition returns a Position. It refuses:
-//   - a right ascension outside [0, 360)
-//   - a declination outside [-90, 90]
-//   - a value that is NaN or infinite
+// NewPosition constructs an ICRS position in degrees. Right ascension must be
+// in [0, 360) and declination in [-90, 90]; both must be finite.
 func NewPosition(ra, dec float64) (position Position, err error) {
 	if !Finite(ra) || ra < none || ra >= FullCircle {
 		return position, fmt.Errorf(
@@ -61,10 +59,8 @@ const (
 	sineBound = 1.0
 )
 
-// GalacticLatitude returns the Galactic latitude b of the position in
-// degrees,
-// from -90 at the south Galactic pole to 90 at the north one. It is zero
-// on the plane of the Milky Way.
+// GalacticLatitude returns b in degrees, from -90 at the south Galactic pole to
+// 90 at the north pole. The Milky Way’s plane is at zero.
 func (position Position) GalacticLatitude() float64 {
 	toward := position.dec * math.Pi / DegreesInHalfACircle
 	pole := galacticPoleDec * math.Pi / DegreesInHalfACircle
