@@ -27,7 +27,7 @@
      "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "furlong"}, "to": {"value": 2, "unit": "um"}}]}},
     {"name": "a unit nilgai does not read at the end", "filter": "X", "want": ["X", "furlong"],
      "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 2, "unit": "furlong"}}]}},
-    {"name": "an edge of nothing", "filter": "X", "want": ["X", "above zero"],
+    {"name": "an edge of nothing", "filter": "X", "want": ["X", "no wavelength"],
      "doc": {"filters": [{"name": "X", "from": {"value": 0, "unit": "um"}, "to": {"value": 2, "unit": "um"}}]}},
     {"name": "a band of no width", "filter": "X", "want": ["X", "below"],
      "doc": {"filters": [{"name": "X", "from": {"value": 1, "unit": "um"}, "to": {"value": 1, "unit": "um"}}]}}

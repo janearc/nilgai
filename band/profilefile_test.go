@@ -29,9 +29,15 @@ func TestAnEntryGivesItsProfile(test *testing.T) {
 	if err != nil {
 		test.Fatal(err)
 	}
-	one, _ := band.Quantity{Value: 1, Unit: "keV"}.Nanometres()
-	two, _ := band.Quantity{Value: 2, Unit: "keV"}.Nanometres()
-	if got.Name != "x" || got.Source.Lo != two || got.Source.Hi != one ||
+	one, err := band.Quantity{Value: 1, Unit: "keV"}.Nanometres()
+	if err != nil {
+		test.Fatal(err)
+	}
+	two, err := band.Quantity{Value: 2, Unit: "keV"}.Nanometres()
+	if err != nil {
+		test.Fatal(err)
+	}
+	if got.Name != "x" || got.Source.Lo != *two || got.Source.Hi != *one ||
 		got.Render != entry.Shown {
 		test.Errorf("profile %+v", got)
 	}
@@ -67,9 +73,9 @@ func TestAnEntryIsRefusedForEachReason(test *testing.T) {
 		}, []string{"from end", `"furlong" is not a unit`}},
 		{"a to end it cannot read", func(each *band.ProfileEntry) {
 			each.To.Value = 0
-		}, []string{"to end", "must be finite and above zero"}},
+		}, []string{"to end", "no wavelength"}},
 		{"a band with no width", func(each *band.ProfileEntry) {
-			each.To = band.Quantity{Value: 1000, Unit: "eV"}
+			each.To = band.Quantity{Value: 1, Unit: "keV"}
 		}, []string{"no width"}},
 		{"shown backwards", func(each *band.ProfileEntry) {
 			each.Shown = radiation.Range{Lo: 490, Hi: 470}

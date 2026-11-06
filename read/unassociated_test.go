@@ -133,8 +133,8 @@ func blankFermi(test *testing.T, account realFermi,
 	if err != nil {
 		test.Fatal(err)
 	}
-	flux, err := nilgai.NewDetection("f", first, last,
-		nilgai.EnergyFlux(fake.Flux), nilgai.EnergyFlux(fake.Flux))
+	energy := nilgai.ErgPerSecPerCm2(float64(fake.Flux))
+	flux, err := nilgai.NewDetection("f", first, last, energy, energy)
 	if err != nil {
 		test.Fatal(err)
 	}
@@ -143,11 +143,10 @@ func blankFermi(test *testing.T, account realFermi,
 		if err != nil {
 			test.Fatal(err)
 		}
-		reading, err := flux.WithReading(nilgai.Good, []nilgai.Flag{flag})
+		flux, err = flux.WithReading(nilgai.Good, []nilgai.Flag{flag})
 		if err != nil {
 			test.Fatal(err)
 		}
-		flux = *reading
 	}
 	position, err := nilgai.NewPosition(float64(fake.RA), float64(fake.Dec))
 	if err != nil {
@@ -160,7 +159,7 @@ func blankFermi(test *testing.T, account realFermi,
 	}
 	var epoch nilgai.When
 	source, err := nilgai.NewSource(catalogue, "x", position, ellipse,
-		epoch, []nilgai.Measurement{flux})
+		epoch, []nilgai.Measurement{*flux})
 	if err != nil {
 		test.Fatal(err)
 	}

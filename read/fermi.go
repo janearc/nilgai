@@ -211,14 +211,16 @@ func (table Fermi) source(got fermiRow) (*nilgai.Source, string, error) {
 	if err != nil {
 		return nil, column, err
 	}
+	energy, energyError := float64(got.flux), float64(got.fluxError)
 	flux, err := nilgai.NewDetection(fermiFilter, table.first, table.last,
-		nilgai.EnergyFlux(got.flux), nilgai.EnergyFlux(got.fluxError))
+		nilgai.ErgPerSecPerCm2(energy),
+		nilgai.ErgPerSecPerCm2(energyError))
 	if err != nil {
 		return nil, "Energy_Flux100", err
 	}
 	name := strings.TrimSpace(got.name)
 	var epoch nilgai.When // 4FGL states no epoch for its positions
-	flagged, unkept := fermiFlagged(flux, got)
+	flagged, unkept := fermiFlagged(*flux, got)
 	source, err := nilgai.NewSource(nilgai.Fermi, name, position, ellipse,
 		epoch, flagged)
 	return source, "", errors.Join(unkept, err)

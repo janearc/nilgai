@@ -1,0 +1,118 @@
+# numbers.yaml for the tests: the search's numbers, with the counts made
+# small so the tests run quickly and a batch fills: four stars a batch.
+
+numbers:
+  - name: quality-floor
+    value: 5
+    unit: ratio
+    says: the least a star's parallax may be as a multiple of its error to be kept; below it the distance is noise and the orbit with it
+    kind: picked
+    by: picked with orbits, 2026-11-05; a lean, and jane's to choose
+  - name: span-years
+    value: 1e7
+    unit: years
+    says: how far back each star is run, and the longest a thrown star flies
+    kind: picked
+    by: jane, 2026-11-05, ten million years
+  - name: steps
+    value: 10000
+    unit: steps
+    says: how many steps the span is run in; a thousand years a step, under a parsec for a star at 800 km/s, small beside the 100 pc a share is counted within
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: batch
+    value: 8
+    unit: stars
+    says: how many stars the kernel runs at once
+    kind: picked
+    by: picked with orbits, 2026-11-05
+  - name: screen-pc
+    value: 1000
+    unit: parsecs
+    says: how near a star's central path must pass Sgr A* under either estimate of the Sun's speed to be drawn; thrown stars' central paths fall inside it about half the time, so the screen loses some
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: draws
+    value: 10
+    unit: draws
+    says: how many times each screened star is run back across its errors and the Sun's speed
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: seed
+    value: 1
+    unit: seed
+    says: the seed the draws start from, so a run repeats
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: near-pc
+    value: 100
+    unit: parsecs
+    says: the radius a star's share of draws passing Sgr A* is counted within
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: candidate-speed
+    value: 400
+    unit: km/s
+    says: the least speed through the galaxy now, at central values, for a candidate; thrown stars this far out move faster than ordinary bulge stars
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: candidate-share
+    value: 0.2
+    unit: share
+    says: the least share of a candidate's draws passing within near-pc
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: candidate-rv-error
+    value: 5
+    unit: km/s
+    says: the most a candidate's radial velocity error may be; the faint stars with huge radial velocities have errors past it
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: thrown
+    value: 40
+    unit: stars
+    says: how many stars the validation throws from Sgr A*
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: thrown-least
+    value: 500
+    unit: km/s
+    says: the least speed a star is thrown at, a parsec from Sgr A*
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: thrown-most
+    value: 1500
+    unit: km/s
+    says: the most speed a star is thrown at, a parsec from Sgr A*
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: thrown-from-pc
+    value: 1
+    unit: parsecs
+    says: how far from Sgr A* a star is thrown from, straight out, where its hole's pull is a small part of a thrown star's speed
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: flight-least-myr
+    value: 0.5
+    unit: million years
+    says: the shortest a thrown star flies
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: flight-most-myr
+    value: 9
+    unit: million years
+    says: the longest a thrown star flies, short of the span so its pass is inside it
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: flight-step-myr
+    value: 0.1
+    unit: million years
+    says: flights are rounded to this, so stars of one flight are carried in one batch
+    kind: picked
+    by: picked with the first pass, 2026-11-06
+  - name: validation-seed
+    value: 2
+    unit: seed
+    says: the seed the validation throws and draws from, apart from the draws' own
+    kind: picked
+    by: picked with the first pass, 2026-11-06

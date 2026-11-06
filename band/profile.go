@@ -124,7 +124,7 @@ func (entry ProfileEntry) Profile() (*radiation.Profile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("its to end: %w", err)
 	}
-	if from == to {
+	if *from == *to {
 		return nil, errors.New("its band has no width")
 	}
 	shown, visible := entry.Shown, radiation.Visible
@@ -137,7 +137,7 @@ func (entry ProfileEntry) Profile() (*radiation.Profile, error) {
 			"light, %v to %v nm", shown.Lo, shown.Hi, visible.Lo,
 			visible.Hi)
 	}
-	source := radiation.Range{Lo: min(from, to), Hi: max(from, to)}
+	source := radiation.Range{Lo: min(*from, *to), Hi: max(*from, *to)}
 	return &radiation.Profile{Name: entry.Name, Source: source,
 		Render: shown}, nil
 }

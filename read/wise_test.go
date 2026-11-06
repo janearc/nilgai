@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/janearc/nilgai"
 	"github.com/janearc/nilgai/read"
 )
 
@@ -54,8 +55,8 @@ func TestWiseFlux(test *testing.T) {
 	for _, each := range loadWise(test).Flux {
 		flux, fluxErr, err := read.WiseFlux(bandNamed(each.Band),
 			float64(each.Mag), float64(each.Err))
-		if err != nil || !near(Num(flux), each.Flux, each.Rel) ||
-			!near(Num(fluxErr), each.FluxErr, each.Rel) {
+		if err != nil || !near(inJanskys(flux), each.Flux, each.Rel) ||
+			!near(inJanskys(fluxErr), each.FluxErr, each.Rel) {
 			test.Errorf("%s: %v, %v, %v", each.Name, flux, fluxErr, err)
 		}
 	}
@@ -97,7 +98,7 @@ func TestZeroPoint(test *testing.T) {
 			continue
 		}
 		got, err := bandNamed(each.Band).ZeroPoint()
-		if err != nil || Num(got) != each.Flux {
+		if err != nil || got != nilgai.Jansky(float64(each.Flux)) {
 			test.Errorf("%s: %v, %v", each.Name, got, err)
 		}
 	}
@@ -141,7 +142,7 @@ func TestReadWiseZeroPointsReadsGoodData(test *testing.T) {
 	}
 	for name, want := range given {
 		got, err := points.For(bandNamed(name))
-		if err != nil || Num(got) != want {
+		if err != nil || got != nilgai.Jansky(float64(want)) {
 			test.Errorf("%s: %v, %v", name, got, err)
 		}
 	}

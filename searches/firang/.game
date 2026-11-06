@@ -1,0 +1,33 @@
+# vim: set filetype=game:
+# firang: stars thrown out of the galactic centre, read for the blanets
+# they may have eaten there. Run these from this folder: game run NAME.
+
+# don't need to publish these
+omit sources
+exclude sources
+omit reports
+exclude reports
+
+# The product: every Gaia DR3 star with a radial velocity, about 5 GB,
+# as celestial-data asks the archive for it. It needs a session from
+# celestial-data gaia-login first, and it is a download of gigabytes:
+# run it on purpose, once. The query is all-sky and ignores the place,
+# but the verb asks for one, so it is given the whole sky.
+run fetch . :: celestial-data fetch --archive gaia --ra 0 --dec 0 --radius 180 --into data
+
+# The search, in order. The tool is cmd/firang; until celestial and
+# celestial-data are released with what it needs, it builds in the go
+# workspace that GOWORK names, so these run with GOWORK set.
+# screen: every kept star run back with both sun speeds.
+run screen . :: go run ./cmd/firang screen --numbers numbers.yaml --gaia data/gaia/gaia_source_0_0_r180.fits --into data/screen.tsv
+# draws: each screened star run back across its errors.
+run draws . :: go run ./cmd/firang draws --numbers numbers.yaml --gaia data/gaia/gaia_source_0_0_r180.fits --screened data/screen.tsv --into data/draws.tsv
+# validate: stars thrown from Sgr A*, seen as Gaia would, drawn the same.
+run validate . :: go run ./cmd/firang validate --numbers numbers.yaml --gaia data/gaia/gaia_source_0_0_r180.fits --screened data/screen.tsv --into data/validate.tsv
+# candidates: a folder for each star the numbers choose from the draws.
+run candidates . :: go run ./cmd/firang candidates --numbers numbers.yaml --drawn data/draws.tsv --into candidates
+
+# The tool's mocks, for its tests: the solver, its opener, the ledger
+# and the product, generated from the interfaces they stand in for.
+run mocks . :: go tool mockgen -package=main -source=cmd/firang/firang.go -destination=cmd/firang/firang_mock_test.go
+run mocks . :: go tool mockgen -package=main -source=cmd/firang/draws.go -destination=cmd/firang/draws_mock_test.go

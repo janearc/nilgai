@@ -1,0 +1,17 @@
+# the changes game mutants lets by, one per line as NAME :: WHY. NAME
+# is the file, the function and the change, as a report prints it after
+# the file and line: no line, since lines move.
+cmd/nilgai/orbits.go package: notKept = -1 // defined: the speed of a row that is not kept => notKept = -2 // defined: the speed of a row that is not kept :: a row not kept has any speed below none: the cut counts speeds of none or more, the run takes speeds at the cut or over, and nothing reads the value itself
+cmd/nilgai/orbits.go package: before = -1 // defined: sorts first, as slices.SortFunc has it => before = -2 // defined: sorts first, as slices.SortFunc has it :: slices.SortFunc reads only the sign of what byNearest gives
+cmd/nilgai/orbits.go package: after = 1 // defined: sorts after => after = 2 // defined: sorts after :: slices.SortFunc reads only the sign of what byNearest gives
+cmd/nilgai/orbits.go numberOr: value, err := strconv.ParseFloat(call.Value(name), 64) => value, err := strconv.ParseFloat(call.Value(name), 65) :: strconv.ParseFloat reads at 32 bits only when told 32, and at 64 for any other size, so 65 reads every flag as 64 does
+searches/firang/cmd/firang/main.go package: afterName = 1 // defined: the arguments after the program's name => afterName = 2 // defined: the arguments after the program's name :: main is the process's entry and no test runs it; run, which it calls, is tested
+searches/firang/cmd/firang/draws.go package: before = -1 // defined: sorts first => before = -2 // defined: sorts first :: slices' sorting reads only the sign of what nearerFirst gives
+searches/firang/cmd/firang/draws.go package: after = 1 // defined: sorts after => after = 2 // defined: sorts after :: slices' sorting reads only the sign of what nearerFirst gives
+searches/firang/cmd/firang/firang.go run: first < len(stars) => first <= len(stars) :: the one more turn takes an empty batch, which runBatch runs nothing for
+searches/firang/cmd/firang/draws.go drawAll: first < len(stars) => first <= len(stars) :: the one more turn takes an empty batch, which draws nothing and runs nothing
+searches/firang/cmd/firang/validate.go drawValidated: first < len(found) => first <= len(found) :: the one more turn takes an empty batch, which draws nothing and runs nothing
+searches/firang/cmd/firang/tables.go number: return strconv.ParseFloat(line[at], 64) => return strconv.ParseFloat(line[at], 65) :: strconv.ParseFloat reads at 32 bits only when told 32, and at 64 for any other size
+searches/firang/cmd/firang/screen.go screen: len(batch.framed)+len(batch.modelled) < at.batch => len(batch.framed)-len(batch.modelled) < at.batch :: the screen's own flush bounds only how many stars wait in memory; flushed once at the end, the solver's batching makes the same calls with the same stars
+searches/firang/cmd/firang/candidates.go write: if err := os.MkdirAll(folder, folderBit); err != nil { return err } => if err := os.MkdirAll(folder, folderBit); err != nil { } :: a folder MkdirAll cannot make, WriteFile cannot write into, and its refusal says the same
+searches/firang/cmd/firang/firang.go sunward: return -by.AlongX().InMetres() / si.Kilo(length.Parsec) => return +by.AlongX().InMetres() / si.Kilo(length.Parsec) :: MWPotential2014 is the same either side of the centre along x, so the circular speed at the Sun's distance on the far side is the one on the Sun's side

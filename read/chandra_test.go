@@ -166,9 +166,9 @@ func pinned(test *testing.T, read sgraFixture, source nilgai.Source) {
 			stated, read.Chandra.Sigma, read.Chandra.Stated)
 	}
 	flux := source.Measurements()[none]
-	if Num(flux.Value().Value()) != read.Chandra.Flux ||
-		flux.Filter() != read.Chandra.Filter ||
-		flux.Value().Unit() != nilgai.ErgPerSecPerCm2 {
+	value, isEnergy := ergs(flux.Value())
+	if !isEnergy || !near(value, read.Chandra.Flux, sameTo(test)) ||
+		flux.Filter() != read.Chandra.Filter {
 		test.Errorf("Sgr A*'s flux reads as %+v", flux)
 	}
 }
@@ -182,8 +182,8 @@ func TestChandraFluxErrorIsHalfTheLimitsWidth(test *testing.T) {
 		test.Fatalf("%d sources from the good row", len(got))
 	}
 	flux := got[none].Measurements()[none]
-	sigma := flux.Error().Value()
-	if !near(Num(sigma), halfTheLimitsWidth, sameTo(test)) {
+	sigma, isEnergy := ergs(flux.Error())
+	if !isEnergy || !near(sigma, halfTheLimitsWidth, sameTo(test)) {
 		test.Errorf("flux error %v, want %v", sigma, halfTheLimitsWidth)
 	}
 }

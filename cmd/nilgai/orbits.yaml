@@ -1,0 +1,34 @@
+# orbits.yaml: the numbers the orbits verb runs by when a call gives
+# none, by name. Each is picked; the call's flags override any of them.
+
+numbers:
+  - name: quality-floor
+    value: 5
+    unit: ratio
+    says: the least a star's parallax may be as a multiple of its error for its distance, one over the parallax, to be worth a speed; below it the distance is noise and the speed with it
+    kind: picked
+    by: picked with the verb, 2026-11-05; a lean, and jane's to choose
+  - name: fastest-share
+    value: 0.1
+    unit: share
+    says: the share of the kept stars run back, the fastest by their speed against the Sun
+    kind: picked
+    by: jane, 2026-11-05, "let's just start with the 10% fastest"
+  - name: span-years
+    value: 1e7
+    unit: years
+    says: how far back each star's orbit is run
+    kind: picked
+    by: jane, 2026-11-05, ten million years
+  - name: steps
+    value: 10000
+    unit: steps
+    says: how many steps the span is run in; a thousand years a step at the default span, half a parsec for a star at 500 km/s; each pass carries its step shares, which say whether the steps resolved it
+    kind: picked
+    by: picked with the verb, 2026-11-05
+  - name: batch
+    value: 65536
+    unit: stars
+    says: how many stars the kernel runs at once; a batch's buffers are its stars times six floats
+    kind: picked
+    by: picked with the verb, 2026-11-05

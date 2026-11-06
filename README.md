@@ -47,9 +47,10 @@ has no measurement and is omitted.
   angle in degrees east of north. It also retains the catalogue’s stated
   axes and confidence level so the conversion can be checked.
 - `Measurement` records a detection or upper limit through a named filter,
-  such as W1, and the libtheme bands it covers. `FluxDensity` is in Jy;
-  `EnergyFlux` is in erg/s/cm². Values and uncertainties must use the same
-  unit. Original value text and catalogue flags can be retained alongside
+  such as W1, and the libtheme bands it covers. `FluxDensity` and
+  `EnergyFlux` are held in SI; `Jansky` and `ErgPerSecPerCm2` make them
+  from the units catalogues give. A value and its uncertainty are one
+  type. Original value text and catalogue flags can be retained alongside
   Nilgai’s quality assessment.
 - `When` stores an MJD or an unknown time. `LightCurve` groups measurements
   at one position in time order, ready for the planned Neowise reader.
@@ -92,6 +93,33 @@ Add `--fermi catalogue.fit` to include 4FGL. A width list such as
 colour, adjusted to the reader’s contrast requirements through libreadme.
 Unreadable rows are reported on standard error after the image is written;
 the image still contains the valid sources, and the command exits with an error.
+
+`nilgai orbits` runs the fastest stars of a Gaia product back through
+the Milky Way to their nearest pass by Sgr A*, on the GPU:
+
+```sh
+nilgai orbits --gaia ~/sky/gaia/gaia_source_0_0_r180.fits --sun frame \
+  > candidates.tsv
+```
+
+The product is what celestial-data's `fetch --archive gaia` brings
+home. The stars whose parallax is at least `--quality` times its error
+are kept, the fastest `--fastest` of them by their speed against the
+Sun are selected, and those run back `--span` years in `--steps` steps,
+`--batch` at a time, through celestial's MWPotential2014 with Sgr A* at
+its centre. One line a star comes out, sorted by the nearest pass, under
+a header that says what was kept, selected and left out. `--sun` is a
+choice with no default: `frame` runs celestial's galactocentric frame as
+published, `model` gives the frame's Sun the model's speed; the two
+differ by 20 km/s along the rotation. The numbers the flags default to
+are in `cmd/nilgai/orbits.yaml`, each with its reason. The command
+builds on macOS only now, since the kernel is celestial's Metal one.
+
+## Searches
+
+`searches/` holds the questions nilgai asks of the sky, one folder each.
+The first is [firang](searches/firang/README.md): stars thrown out of
+the galactic centre, read for the blanets they may have eaten there.
 
 ## Building and checking
 

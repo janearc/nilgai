@@ -36,8 +36,24 @@ func collect(table catalogueReader, in io.Reader) (sources []nilgai.Source,
 	return sources, errs
 }
 
-// fluxNumber returns a flux's number, as a fixture writes numbers.
-func fluxNumber(each nilgai.Flux) Num { return Num(each.Value()) }
+// janskys returns a flux density in Jy, the unit the fixtures work
+// infrared fluxes in, and whether the flux is a flux density at all.
+func janskys(each nilgai.Flux) (Num, bool) {
+	density, isDensity := each.(nilgai.FluxDensity)
+	return inJanskys(density), isDensity
+}
+
+// inJanskys returns a flux density in Jy.
+func inJanskys(density nilgai.FluxDensity) Num {
+	return Num(density / nilgai.Jansky(one))
+}
+
+// ergs returns an energy flux in erg/s/cm^2, the unit the fixtures work
+// X-ray and gamma-ray fluxes in, and whether the flux is an energy flux.
+func ergs(each nilgai.Flux) (Num, bool) {
+	energy, isEnergy := each.(nilgai.EnergyFlux)
+	return Num(energy / nilgai.ErgPerSecPerCm2(one)), isEnergy
+}
 
 // turnsApart returns how far apart two angles in degrees are, measured
 // the short way round the circle.

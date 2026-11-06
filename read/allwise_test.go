@@ -183,11 +183,12 @@ func TestAllWISEEllipsesPointTheRightWay(test *testing.T) {
 func TestAllWISEDetection(test *testing.T) {
 	read := loadAllwise(test)
 	flux := onlySource(test, read, read.Good).Measurements()[none]
+	value, valueIsDensity := janskys(flux.Value())
+	sigma, sigmaIsDensity := janskys(flux.Error())
 	if flux.IsUpperLimit() || flux.Kind() != nilgai.Detection ||
-		flux.Value().Unit() != nilgai.Jansky || flux.Error() == nil {
-		test.Fatalf("W1 read as %+v, not a detection in Jy", flux)
+		!valueIsDensity || !sigmaIsDensity {
+		test.Fatalf("W1 read as %+v, not a flux-density detection", flux)
 	}
-	value, sigma := fluxNumber(flux.Value()), fluxNumber(flux.Error())
 	if !near(value, read.Flux.Value, read.Flux.Rel) ||
 		!near(sigma, read.Flux.Error, read.Flux.Rel) {
 		test.Errorf("W1 read as %+v, want %v and %v", flux,
@@ -201,9 +202,9 @@ func TestAllWISEDetection(test *testing.T) {
 func TestAllWISEUpperLimit(test *testing.T) {
 	read := loadAllwise(test)
 	flux := onlySource(test, read, read.Limit.Row).Measurements()[none]
-	limit := fluxNumber(flux.Value())
+	limit, isDensity := janskys(flux.Value())
 	if !flux.IsUpperLimit() || flux.Kind() != nilgai.UpperLimit ||
-		flux.Error() != nil ||
+		flux.Error() != nil || !isDensity ||
 		!near(limit, read.Limit.Value, read.Limit.Rel) {
 		test.Errorf("%s read as %+v, want a limit of %v", read.Limit.Name,
 			flux, read.Limit.Value)

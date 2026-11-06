@@ -13,6 +13,18 @@ import (
 // tags identify the columns.
 func Write(out io.Writer, name string, columns []fitsio.Column,
 	rows ...any) error {
+	var each [][]any
+	for _, row := range rows {
+		each = append(each, []any{row})
+	}
+	return writeRows(out, name, columns, each)
+}
+
+// writeRows emits an empty primary HDU followed by a named binary table
+// with the supplied columns, each row written from its arguments: one, a
+// pointer to a struct, or a value for each column in order.
+func writeRows(out io.Writer, name string, columns []fitsio.Column,
+	rows [][]any) error {
 	file, err := fitsio.Create(out)
 	if err != nil {
 		return err
@@ -29,7 +41,7 @@ func Write(out io.Writer, name string, columns []fitsio.Column,
 		return err
 	}
 	for _, each := range rows {
-		if err := table.Write(each); err != nil {
+		if err := table.Write(each...); err != nil {
 			return err
 		}
 	}

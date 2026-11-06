@@ -6,10 +6,16 @@
 // Nilgai supplies records for comparison, leaving source matching and
 // classification to callers.
 //
-// FluxDensity (Jy) and EnergyFlux (erg/s/cm²) are distinct types. A
-// Measurement’s value and uncertainty must use the same unit. Upper limits have
-// an explicit Kind rather than a sentinel value, and converted measurements can
-// retain the catalogue’s original text and flags.
+// Package nilgai reads and normalises. It does not match, score or decide.
+// Matching belongs to a later library.
+//
+// Quantities carry their unit in their type, held in SI: FluxDensity and
+// EnergyFlux are different types, which Jansky and ErgPerSecPerCm2 make
+// from the units catalogues give. A Measurement's value and error are one
+// type, so a pair that disagrees does not compile.
+//
+// Kind marks a Measurement as an upper limit; a limit is never a special
+// number. Every converted value keeps the catalogue's own beside it.
 //
 // # Packages
 //

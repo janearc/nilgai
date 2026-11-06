@@ -358,7 +358,7 @@ func TestShowFailsWhenAReaderCannotBeMade(test *testing.T) {
 	unreadable := []search{{"chandra", noReader}, {"allwise", noReader},
 		{"fermi", noReader}}
 	var wrote, said bytes.Buffer
-	code := toolWith("", unreadable, band.NewEmbedded()).RunWith(
+	code := toolWith("", unreadable, band.NewEmbedded(), metal{}, published{}, orbitsNumbers).RunWith(
 		argsFor(read.Draw[none], named), nothingToRead(), &wrote, &said)
 	out, errs := wrote.Bytes(), said.Bytes()
 	if code != exitFailed || len(out) != none ||
@@ -376,7 +376,7 @@ func TestShowFailsWhenTheProfilesCannotBeRead(test *testing.T) {
 	source := mock_nilgai.NewMockProfileSource(gomock.NewController(test))
 	source.EXPECT().Profiles().Return(nil, errProfiles).Times(one)
 	var wrote, said bytes.Buffer
-	code := toolWith("", realSearches(), source).RunWith(
+	code := toolWith("", realSearches(), source, metal{}, published{}, orbitsNumbers).RunWith(
 		argsFor(read.Draw[none], named), nothingToRead(), &wrote, &said)
 	if code != exitFailed || wrote.Len() != none ||
 		!strings.Contains(said.String(), errProfiles.Error()) {
@@ -393,7 +393,7 @@ func TestShowFailsWhenTheProfilesGiveChandraNoBand(test *testing.T) {
 	source := mock_nilgai.NewMockProfileSource(gomock.NewController(test))
 	source.EXPECT().Profiles().Return([]radiation.Profile{}, nil).Times(one)
 	var wrote, said bytes.Buffer
-	code := toolWith("", realSearches(), source).RunWith(
+	code := toolWith("", realSearches(), source, metal{}, published{}, orbitsNumbers).RunWith(
 		argsFor(read.Draw[none], named), nothingToRead(), &wrote, &said)
 	if code != exitFailed || wrote.Len() != none ||
 		!strings.Contains(said.String(), "chandra") {
@@ -414,7 +414,7 @@ func TestShowDrawsWithTheProfilesItIsGiven(test *testing.T) {
 	source := mock_nilgai.NewMockProfileSource(gomock.NewController(test))
 	source.EXPECT().Profiles().Return(profiles, nil).Times(one)
 	var wrote, said bytes.Buffer
-	code := toolWith("", realSearches(), source).RunWith(
+	code := toolWith("", realSearches(), source, metal{}, published{}, orbitsNumbers).RunWith(
 		argsFor(read.Draw[none], named), nothingToRead(), &wrote, &said)
 	picture := pictureOf(test, wrote.Bytes())
 	if code != exitRan || !inked(picture) {

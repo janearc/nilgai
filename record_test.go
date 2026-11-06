@@ -82,17 +82,17 @@ func TestWhenRefuses(test *testing.T) {
 	}
 }
 
-func TestFluxUnitsDiffer(test *testing.T) {
-	read := loadWorld(test)
-	density := nilgai.FluxDensity(read.Density.Value)
-	energy := nilgai.EnergyFlux(read.Density.Value)
-	if density.Unit() != nilgai.Jansky ||
-		energy.Unit() != nilgai.ErgPerSecPerCm2 ||
-		density.Unit() == energy.Unit() {
-		test.Errorf("%v and %v", density.Unit(), energy.Unit())
+// TestFluxesAreHeldInSI: Jansky and ErgPerSecPerCm2 turn one of their
+// units into what the IAU and the cgs system define it as.
+func TestFluxesAreHeldInSI(test *testing.T) {
+	want := loadWorld(test).InSI
+	if got := Num(nilgai.Jansky(unit)); !near(got, want.Jansky, want.Rel) {
+		test.Errorf("one jansky is %v W/m^2/Hz, want %v", got, want.Jansky)
 	}
-	if density.Value() != energy.Value() {
-		test.Error("the same number reads differently")
+	got := Num(nilgai.ErgPerSecPerCm2(unit))
+	if !near(got, want.ErgPerSecPerCm2, want.Rel) {
+		test.Errorf("one erg/s/cm^2 is %v W/m^2, want %v", got,
+			want.ErgPerSecPerCm2)
 	}
 }
 
@@ -101,10 +101,13 @@ func TestNewDetection(test *testing.T) {
 	w1 := read.W1.build()
 	measurement := read.density(test, w1)
 	first, last := measurement.Bands()
+	value, valueIsDensity := measurement.Value().(nilgai.FluxDensity)
+	sigma, sigmaIsDensity := measurement.Error().(nilgai.FluxDensity)
 	if measurement.Kind() != nilgai.Detection || measurement.IsUpperLimit() ||
 		measurement.Quality() != nilgai.Good ||
-		Num(measurement.Value().Value()) != read.Density.Value ||
-		Num(measurement.Error().Value()) != read.Density.Error ||
+		!valueIsDensity || !sigmaIsDensity ||
+		value != nilgai.Jansky(float64(read.Density.Value)) ||
+		sigma != nilgai.Jansky(float64(read.Density.Error)) ||
 		measurement.Filter() != read.W1.Name ||
 		first != w1.first || last != w1.last {
 		test.Errorf("%+v", measurement)
@@ -119,37 +122,15 @@ func TestNewDetectionAcceptsZeroFlux(test *testing.T) {
 	}
 }
 
-// mixedPair holds a value and an error in different units.
-type mixedPair struct{ value, sigma nilgai.Flux }
-
-func TestNewDetectionRefusesMixedUnits(test *testing.T) {
+// TestBadFluxesAreRefused is the anti-test: each bad flux is refused, with
+// nil, as a detection's value, as its error and as an upper limit.
+func TestBadFluxesAreRefused(test *testing.T) {
 	read := loadWorld(test)
 	w1 := read.W1.build()
-	density := nilgai.FluxDensity(read.Density.Value)
-	energy := nilgai.EnergyFlux(read.Density.Value)
-	for _, each := range []mixedPair{{density, energy}, {energy, density}} {
-		got, err := nilgai.NewDetection(w1.name, w1.first, w1.last,
-			each.value, each.sigma)
-		if err == nil || got.Value() != nil {
-			test.Errorf("%v with %v was accepted", each.value.Unit(),
-				each.sigma.Unit())
-		}
-	}
-}
-
-func TestNewDetectionRefusesBadFluxes(test *testing.T) {
-	read := loadWorld(test)
-	w1 := read.W1.build()
-	good := nilgai.FluxDensity(read.Density.Value)
+	everywhere := refused{value: true, err: true, limit: true}
 	for _, each := range read.BadFluxes {
-		bad := each.flux()
-		if _, err := nilgai.NewDetection(w1.name, w1.first, w1.last,
-			bad, good); err == nil {
-			test.Errorf("%s was accepted as a value", each.Name)
-		}
-		if _, err := nilgai.NewDetection(w1.name, w1.first, w1.last,
-			good, bad); err == nil {
-			test.Errorf("%s was accepted as an error", each.Name)
+		if got := each.refusals(test, read, w1); got != everywhere {
+			test.Errorf("%s: refused %+v", each.Name, got)
 		}
 	}
 }
@@ -165,10 +146,11 @@ func badFilters(w1 filter) []filter {
 
 func TestNewDetectionRefusesBadFilters(test *testing.T) {
 	read := loadWorld(test)
-	density := nilgai.FluxDensity(read.Density.Value)
+	density := nilgai.Jansky(float64(read.Density.Value))
 	for _, each := range badFilters(read.W1.build()) {
-		if _, err := nilgai.NewDetection(each.name, each.first, each.last,
-			density, density); err == nil {
+		got, err := nilgai.NewDetection(each.name, each.first, each.last,
+			density, density)
+		if err == nil || got != nil {
 			test.Errorf("%+v was accepted", each)
 		}
 	}
@@ -177,27 +159,22 @@ func TestNewDetectionRefusesBadFilters(test *testing.T) {
 func TestNewUpperLimit(test *testing.T) {
 	read := loadWorld(test)
 	w1 := read.W1.build()
+	energy := float64(read.Energy.Value)
 	limit, err := nilgai.NewUpperLimit(w1.name, w1.first, w1.last,
-		nilgai.EnergyFlux(read.Energy.Value))
+		nilgai.ErgPerSecPerCm2(energy))
 	if err != nil || !limit.IsUpperLimit() || limit.Error() != nil ||
 		limit.Kind() != nilgai.UpperLimit {
 		test.Errorf("%+v, %v", limit, err)
 	}
 }
 
-func TestNewUpperLimitRefuses(test *testing.T) {
+func TestNewUpperLimitRefusesBadFilters(test *testing.T) {
 	read := loadWorld(test)
-	w1 := read.W1.build()
-	for _, each := range read.BadFluxes {
-		if _, err := nilgai.NewUpperLimit(w1.name, w1.first, w1.last,
-			each.flux()); err == nil {
-			test.Errorf("%s was accepted", each.Name)
-		}
-	}
-	density := nilgai.FluxDensity(read.Density.Value)
-	for _, each := range badFilters(w1) {
-		if _, err := nilgai.NewUpperLimit(each.name, each.first, each.last,
-			density); err == nil {
+	density := nilgai.Jansky(float64(read.Density.Value))
+	for _, each := range badFilters(read.W1.build()) {
+		got, err := nilgai.NewUpperLimit(each.name, each.first, each.last,
+			density)
+		if err == nil || got != nil {
 			test.Errorf("a limit through %+v was accepted", each)
 		}
 	}

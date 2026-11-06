@@ -103,11 +103,11 @@ func TestAllWISEReadsFourBands(test *testing.T) {
 			test.Fatal(err)
 		}
 		gotFirst, gotLast := got[place].Bands()
-		value, sigma := fluxNumber(got[place].Value()),
-			fluxNumber(got[place].Error())
+		value, valueIsDensity := janskys(got[place].Value())
+		sigma, sigmaIsDensity := janskys(got[place].Error())
 		if got[place].Filter() != want.Filter || gotFirst != first ||
 			gotLast != last || got[place].Kind() != nilgai.Detection ||
-			got[place].Value().Unit() != nilgai.Jansky ||
+			!valueIsDensity || !sigmaIsDensity ||
 			!near(value, want.Value, read.Rel) ||
 			!near(sigma, want.Error, read.Rel) {
 			test.Errorf("%s read as %+v, want %v and %v in bands %v to %v",
@@ -151,8 +151,8 @@ func TestAllWISEBandUpperLimit(test *testing.T) {
 	read := loadBands(test)
 	got := readOne(test, read.Header, read.LimitRow).Measurements()
 	last := got[len(got)-one]
-	limit := fluxNumber(last.Value())
-	if last.Filter() != "W4" || !last.IsUpperLimit() ||
+	limit, isDensity := janskys(last.Value())
+	if last.Filter() != "W4" || !last.IsUpperLimit() || !isDensity ||
 		last.Error() != nil || !near(limit, read.LimitValue, read.Rel) {
 		test.Errorf("W4 read as %+v, want a limit of %v", last,
 			read.LimitValue)
@@ -275,10 +275,12 @@ func TestAllWISEReadsTheRealFourBandSearch(test *testing.T) {
 			continue
 		}
 		w2, w3 := got[one], got[halves]
-		limit := fluxNumber(w2.Value())
-		value, sigma := fluxNumber(w3.Value()), fluxNumber(w3.Error())
+		limit, limitIsDensity := janskys(w2.Value())
+		value, valueIsDensity := janskys(w3.Value())
+		sigma, sigmaIsDensity := janskys(w3.Error())
 		rel := read.Real.Rel
-		if !w2.IsUpperLimit() || !near(limit, want.W2Limit, rel) ||
+		if !limitIsDensity || !valueIsDensity || !sigmaIsDensity ||
+			!w2.IsUpperLimit() || !near(limit, want.W2Limit, rel) ||
 			w3.IsUpperLimit() || !near(value, want.W3, rel) ||
 			!near(sigma, want.W3Error, rel) {
 			test.Errorf("%s: W2 %+v, W3 %+v", want.ID, w2, w3)

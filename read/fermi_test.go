@@ -207,9 +207,10 @@ func TestFermiReadsTheFluxAndKeepsTheFlags(test *testing.T) {
 	for _, each := range read.Sources {
 		flux := oneFermi(test, read, each.Row).Measurements()[none]
 		gotFirst, gotLast := flux.Bands()
-		value, sigma := fluxNumber(flux.Value()), fluxNumber(flux.Error())
+		value, valueIsEnergy := ergs(flux.Value())
+		sigma, sigmaIsEnergy := ergs(flux.Error())
 		if flux.Filter() != read.Filter || flux.Kind() != nilgai.Detection ||
-			flux.Value().Unit() != nilgai.ErgPerSecPerCm2 ||
+			!valueIsEnergy || !sigmaIsEnergy ||
 			!near(value, each.Row.Flux, read.Rel) ||
 			!near(sigma, each.Row.FluxError, read.Rel) ||
 			gotFirst != first || gotLast != last ||

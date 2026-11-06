@@ -51,56 +51,61 @@ type Measurement struct {
 	raw     string
 }
 
-// NewDetection constructs a measured flux with its one-sigma uncertainty
-// through the named filter, covering libtheme bands first to last.
+// NewDetection returns a Measurement of a measured flux and its
+// one-sigma error, through the named filter covering libtheme bands first
+// to last. The flux and its error are one type of Flux, so a flux density
+// with an energy-flux error does not compile.
 //
-// It rejects missing, negative, or nonfinite fluxes, mismatched units, an empty
-// filter name, and reversed band bounds. Quality starts as Good; WithReading
-// attaches the catalogue’s flags and their interpretation.
-func NewDetection(
+// NewDetection refuses, and returns nil on a refusal:
+//   - a flux or error below zero, NaN or infinite
+//   - a filter with no name
+//   - a first band above the last
+//
+// NewDetection's measurement starts with Quality Good; WithReading sets
+// it from the flags.
+func NewDetection[Of oneFlux](
 	filter string,
 	first, last bands.Band,
-	value, sigma Flux,
-) (measurement Measurement, err error) {
-	if err = checkFlux("error", sigma); err != nil {
-		return measurement, err
+	value, sigma Of,
+) (*Measurement, error) {
+	if why := whyNotAFlux(float64(value)); why != nil {
+		return nil, fmt.Errorf("value %w", why)
 	}
-	if err = checkFlux("value", value); err != nil {
-		return measurement, err
+	if why := whyNotAFlux(float64(sigma)); why != nil {
+		return nil, fmt.Errorf("error %w", why)
 	}
-	if sigma.Unit() != value.Unit() {
-		return measurement, fmt.Errorf(
-			"value is in %s but error is in %s",
-			value.Unit(), sigma.Unit())
+	if why := whyNotAFilter(filter, first, last); why != nil {
+		return nil, why
 	}
-	if err = checkFilter(filter, first, last); err != nil {
-		return measurement, err
-	}
-	return Measurement{filter: filter, first: first, last: last,
+	return &Measurement{filter: filter, first: first, last: last,
 		kind: Detection, value: value, err: sigma, quality: Good}, nil
 }
 
-// NewUpperLimit constructs a flux limit through the named filter, covering
-// libtheme bands first to last. The limit must be finite and nonnegative, the
-// filter must have a name, and band bounds must be ordered. Quality starts as
-// Good; there is no uncertainty value for an upper limit.
-func NewUpperLimit(
+// NewUpperLimit returns a Measurement that says the flux through the
+// named filter, covering libtheme bands first to last, is at most the
+// limit. The Quality starts as Good.
+//
+// NewUpperLimit refuses what NewDetection refuses of a flux and a filter,
+// and returns nil on a refusal.
+func NewUpperLimit[Of oneFlux](
 	filter string,
 	first, last bands.Band,
-	limit Flux,
-) (measurement Measurement, err error) {
-	if err = checkFlux("limit", limit); err != nil {
-		return measurement, err
+	limit Of,
+) (*Measurement, error) {
+	if why := whyNotAFlux(float64(limit)); why != nil {
+		return nil, fmt.Errorf("limit %w", why)
 	}
-	if err = checkFilter(filter, first, last); err != nil {
-		return measurement, err
+	if why := whyNotAFilter(filter, first, last); why != nil {
+		return nil, why
 	}
-	return Measurement{filter: filter, first: first, last: last,
+	return &Measurement{filter: filter, first: first, last: last,
 		kind: UpperLimit, value: limit, quality: Good}, nil
 }
 
-// checkFilter rejects an empty filter name or reversed band bounds.
-func checkFilter(filter string, first, last bands.Band) error {
+// whyNotAFilter returns why a filter cannot label a measurement: it has
+// no name, or its first band is above its last. It returns nil for a
+// filter that can.
+func whyNotAFilter(filter string, first, last bands.Band) error {
 	if filter == "" {
 		return errors.New("measurement has no filter")
 	}

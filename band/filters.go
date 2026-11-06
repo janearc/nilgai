@@ -74,5 +74,5 @@ func filterEdges(fromValue float64, fromUnit string, toValue float64,
 	if err != nil {
 		return first, last, err
 	}
-	return BandsBetween(min(from, to), max(from, to))
+	return BandsBetween(min(*from, *to), max(*from, *to))
 }

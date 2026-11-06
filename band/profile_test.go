@@ -46,14 +46,19 @@ func TestNanometres(test *testing.T) {
 	for _, each := range read.Units {
 		got, err := band.Quantity{Value: float64(each.Value),
 			Unit: each.Unit}.Nanometres()
-		if err != nil || !near(Num(got), each.NM, read.SameTo) {
-			test.Errorf("%v %s: %v nm, %v; want %v", each.Value,
-				each.Unit, got, err, each.NM)
+		if err != nil {
+			test.Errorf("%v %s: %v", each.Value, each.Unit, err)
+			continue
+		}
+		if !near(Num(*got), each.NM, read.SameTo) {
+			test.Errorf("%v %s: %v nm; want %v", each.Value, each.Unit,
+				*got, each.NM)
 		}
 	}
 }
 
-// TestNanometresRefuses is the anti-test. Nanometres refuses:
+// TestNanometresRefuses is the anti-test. Nanometres returns nil and
+// error for:
 //   - a unit nilgai does not know
 //   - a value that is not above zero
 //   - a value that comes to no wavelength
@@ -61,9 +66,12 @@ func TestNanometresRefuses(test *testing.T) {
 	for _, each := range loadProfiles(test).UnitsRefused {
 		got, err := band.Quantity{Value: float64(each.Value),
 			Unit: each.Unit}.Nanometres()
-		if err == nil || got != none {
-			test.Errorf("%v %q was read as %v nm", each.Value, each.Unit,
-				got)
+		if err == nil {
+			test.Errorf("%v %q was not refused", each.Value, each.Unit)
+		}
+		if got != nil {
+			test.Errorf("%v %q came back with %v nm, not nil", each.Value,
+				each.Unit, *got)
 		}
 	}
 }

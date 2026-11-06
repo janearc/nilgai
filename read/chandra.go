@@ -132,7 +132,7 @@ func (table Chandra) source(
 	}
 	var epoch nilgai.When // the CSC states no epoch for its positions
 	source, err := nilgai.NewSource(nilgai.Chandra, cells["name"], position,
-		ellipse, epoch, []nilgai.Measurement{flux})
+		ellipse, epoch, []nilgai.Measurement{*flux})
 	return source, "", err
 }
 
@@ -159,13 +159,14 @@ func chandraEllipse(got map[string]float64) (ellipse nilgai.ErrorEllipse,
 	return ellipse, "err_ellipse_r0", err
 }
 
-// flux constructs a broad-band detection. It approximates the uncertainty as
-// half the interval between CSC’s 68% limits, which may be asymmetric around
-// the reported flux.
-func (table Chandra) flux(got map[string]float64) (nilgai.Measurement,
+// flux returns the broad-band flux as a detection. The CSC gives 68%
+// limits, which are one sigma, and they are not quite even on either side
+// of the flux. The error is half the width between them. The CSC gives
+// all three in erg/s/cm^2.
+func (table Chandra) flux(got map[string]float64) (*nilgai.Measurement,
 	error) {
 	width := got["flux_aper_hilim_b"] - got["flux_aper_lolim_b"]
-	sigma := nilgai.EnergyFlux(nilgai.Half(width))
+	sigma := nilgai.ErgPerSecPerCm2(nilgai.Half(width))
 	return nilgai.NewDetection(chandraBand, table.first, table.last,
-		nilgai.EnergyFlux(got["flux_aper_b"]), sigma)
+		nilgai.ErgPerSecPerCm2(got["flux_aper_b"]), sigma)
 }

@@ -69,8 +69,10 @@ func TestFermiReadsTheRealRows(test *testing.T) {
 	ra, dec := Num(position.RA()), Num(position.Dec())
 	major, minor := Num(ellipse.StatedSemiMajor()), Num(ellipse.StatedSemiMinor())
 	angle := Num(ellipse.PositionAngle())
-	value, sigma := fluxNumber(flux.Value()), fluxNumber(flux.Error())
+	value, valueIsEnergy := ergs(flux.Value())
+	sigma, sigmaIsEnergy := ergs(flux.Error())
 	if got.ID() != want.ID || got.Catalogue() != nilgai.Fermi ||
+		!valueIsEnergy || !sigmaIsEnergy ||
 		!near(ra, want.RA, rel) || !near(dec, want.Dec, rel) ||
 		!near(major, want.StatedMajor, rel) ||
 		!near(minor, want.StatedMinor, rel) ||

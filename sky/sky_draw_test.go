@@ -52,7 +52,7 @@ func sourceAt(test *testing.T, catalogue nilgai.Catalogue,
 	}
 	var epoch nilgai.When
 	source, err := nilgai.NewSource(catalogue, "a source", at, ellipse,
-		epoch, []nilgai.Measurement{flux})
+		epoch, []nilgai.Measurement{*flux})
 	if err != nil {
 		test.Fatal(err)
 	}

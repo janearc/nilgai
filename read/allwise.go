@@ -255,7 +255,7 @@ func (table AllWISE) measurements(cells map[string]string) (
 		if err != nil {
 			return nil, column, err
 		}
-		read, failed := flagged(got, cells, place)
+		read, failed := flagged(*got, cells, place)
 		made = append(made, read...)
 		unkept = errors.Join(unkept, failed)
 	}
@@ -297,34 +297,33 @@ func absent(cells map[string]string, each allwiseBand) bool {
 // upper limit when the error is empty, which is how AllWISE writes a
 // limit.
 //
-// If a cell cannot be read, brightness names which of the two columns it
-// was.
+// If a cell cannot be read, brightness returns nil and names which of the
+// two columns it was.
 func (table AllWISE) brightness(place int, magnitude float64,
-	magnitudeError string) (measurement nilgai.Measurement, column string,
-	err error) {
+	magnitudeError string) (*nilgai.Measurement, string, error) {
 	each, edges := allwiseBands[place], table.edges[place]
 	if magnitudeError == "" {
 		limit, _, err := WiseFlux(each.band, magnitude, none)
 		if err != nil {
-			return measurement, each.magnitude, err
+			return nil, each.magnitude, err
 		}
-		measurement, err = nilgai.NewUpperLimit(each.filter,
+		measurement, err := nilgai.NewUpperLimit(each.filter,
 			edges.first, edges.last, limit)
 		return measurement, each.magnitude, err
 	}
 	spread, err := strconv.ParseFloat(magnitudeError, 64)
 	if err != nil {
-		return measurement, each.sigma, err
+		return nil, each.sigma, err
 	}
 	if !nilgai.NotBelowNone(spread) {
-		return measurement, each.sigma, fmt.Errorf("magnitude error "+
+		return nil, each.sigma, fmt.Errorf("magnitude error "+
 			"%v must be finite and not below zero", spread)
 	}
 	flux, sigma, err := WiseFlux(each.band, magnitude, spread)
 	if err != nil {
-		return measurement, each.magnitude, err
+		return nil, each.magnitude, err
 	}
-	measurement, err = nilgai.NewDetection(each.filter, edges.first,
+	measurement, err := nilgai.NewDetection(each.filter, edges.first,
 		edges.last, flux, sigma)
 	return measurement, each.magnitude, err
 }
